@@ -75,3 +75,5 @@ DerivedDataCache/*
 
 # THESE DIRECTORIES SHOULDN'T GO ON GITHUB
 Content/StarterContent/**
+Content/Characters/**
+Content/LevelPrototyping/**

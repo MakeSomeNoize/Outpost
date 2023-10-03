@@ -1,0 +1,23 @@
+--------------------OUTPOST--------------------
+
+-----GENRE: First-person shooter
+
+-----GAME FLOW: The player spawns in a procedurally-generated area. A fair distance away from them is an outpost that's being guarded by enemy soldiers.
+
+The player must assault the outpost, kill the enemy soldiers, and defend the outpost from enemy reinforcements.
+
+Enemy reinforcements come in waves, and the player will have a limited amount of time to prepare before each wave approaches.
+
+The player starts out with limited supplies on hand. Once the initial outpost guards are dead, the player can scavenge their equipment.
+
+Killing enemies will reward the player with cash, that can be spent on additional weapons and items.
+
+Bonus cash will be awarded for doing certain things, like killing enemies with headshots or surviving a wave without taking any damage.
+
+-----PLUGINS REQUIRED:
+	---EnhancedInput (enabled by default)
+	---UINavigation 3.0
+	---Procedural Content Generation Framework (experimental, only available in UE 5.2 and up)
+	---Pro Aim Assist
+
+---Some of the code and assets from the FPShooter project will be reused for this one

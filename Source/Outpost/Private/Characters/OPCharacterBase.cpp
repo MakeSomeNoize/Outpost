@@ -14,6 +14,9 @@ AOPCharacterBase::AOPCharacterBase(const FObjectInitializer& ObjectInitializer) 
 void AOPCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//Get a reference to the world subsystem.
+	WorldSubsystem = GetWorld()->GetSubsystem<UOPWorldSubsystem>();
 	
 }
 

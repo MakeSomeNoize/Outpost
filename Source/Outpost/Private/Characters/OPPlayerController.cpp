@@ -14,7 +14,8 @@ AOPPlayerController::AOPPlayerController()
 void AOPPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	CustomGameOnlyInputMode(false);
 }
 
 // Called every frame
@@ -22,4 +23,12 @@ void AOPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AOPPlayerController::CustomGameOnlyInputMode(bool bInConsumeCaptureMouseDown)
+{
+	FInputModeGameOnly InputMode;
+	InputMode.SetConsumeCaptureMouseDown(bInConsumeCaptureMouseDown);
+
+	SetInputMode(InputMode);
 }
