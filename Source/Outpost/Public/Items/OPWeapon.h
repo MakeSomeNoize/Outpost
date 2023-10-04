@@ -5,7 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Outpost/Outpost.h"
+#include "Interfaces/OPInteractInterface.h"
 #include "OPWeapon.generated.h"
+
+//Forward declarations.
+class UOPWorldSubsystem;
+class UBoxComponent;
 
 //A struct for the core attributes of a weapon.
 USTRUCT(BlueprintType)
@@ -59,16 +64,19 @@ struct FWeaponStats
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Booleans")
 		bool bIsWeaponAutomatic;
 
-	//Determines if this weapon has an additional animation-based cooldown, or not.
+	/*
+	Determines if this weapon has an additional animation-based cooldown, or not.
+	This only applies to automatic weapons that should NOT be allowed to fire as fast as the player can pull the trigger.
+	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Booleans")
 		bool bDoesWeaponHaveAnimationCooldown;
 
 	//Default values for FWeaponStats struct.
-	FWeaponStats() : WeaponType(EWeaponType::Unarmed), Damage(1), DamageType(UDamageType::StaticClass()), MaxRange(10000.f), FireRate(1.f), CurrentMagazine(0), MaxMagazine(1), SpreadRadius(0.05f), ShotAmount(1), bIsWeaponAutomatic(false), bDoesWeaponHaveAnimationCooldown(false) {}
+	FWeaponStats() : WeaponType(EWeaponType::Unarmed), Damage(1), DamageType(nullptr), MaxRange(10000.f), FireRate(1.f), CurrentMagazine(0), MaxMagazine(1), SpreadRadius(0.05f), ShotAmount(1), bIsWeaponAutomatic(false), bDoesWeaponHaveAnimationCooldown(false) {}
 };
 
 UCLASS()
-class OUTPOST_API AOPWeapon : public AActor
+class OUTPOST_API AOPWeapon : public AActor, public IOPInteractInterface
 {
 	GENERATED_BODY()
 	
@@ -79,17 +87,40 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	/* Overridden from IOPInteractInterface */
+
+	virtual void StartFocus_Implementation() override;
+	virtual void EndFocus_Implementation() override;
+	virtual void OnInteract_Implementation(AActor* CallingPlayer) override;
+
 	//The core attributes of this weapon.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon")
-		FWeaponStats WeaponStats;
+		FWeaponStats Stats;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	/* Actor and scene components */
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
+		TObjectPtr<USceneComponent> WeaponRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
+		TObjectPtr<UStaticMeshComponent> WeaponMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
+		TObjectPtr<UBoxComponent> InteractRadius;
+
+	void Shoot();
+	void WeaponLineTrace();
+	FVector CalculateWeaponSpread();
 
 	FHitResult WeaponHitResult;
 	
 	//Out parameters for storing the player camera's location and rotation.
 	FVector CameraLocation;
 	FRotator CameraRotation;
+
+	TObjectPtr<UOPWorldSubsystem> WorldSubsystem;
 };

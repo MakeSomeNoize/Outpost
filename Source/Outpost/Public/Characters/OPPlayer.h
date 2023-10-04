@@ -39,6 +39,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	//Overridden from OPCharacterBase class.
+	virtual void CharacterDeath() override;
+
+	/* Overridden from OPCharacterInterface */
+
+	//PLAYER-SPECIFIC INTERFACE FUNCTIONS WILL BE DECLARED HERE
+
 	/* Actor and scene components */
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPPlayer|Components")
@@ -172,13 +179,6 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
 		bool bCanPlayerMelee = true;
-
-	/*
-	Performs a sphere trace, to see if the player's melee attack hit anything.
-	To be used in Animation Notifies only.
-	*/
-	UFUNCTION(BlueprintCallable, Category = "OPPlayer|Melee")
-		void MeleeSphereTrace();
 
 	/* General booleans */
 

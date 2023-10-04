@@ -1,12 +1,12 @@
 ---Start working on the pause menu and HUD
 
----Add Dev Assets - Brackeys' modern weapons pack to the project
-
 ---Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
 
----Create a UInterface for the interaction system
+---Finish building the weapon mechanics (firing, reloading, switching)
 
----Create a UInterface for characters
-	---Move MeleeSphereTrace() to character interface
+---Create CurrentHealth and MaxHealth variables in OPCharacterBase class, with accompanying getter and setter functions
+	---Use "BlueprintGetter" and "BlueprintSetter" UPROPERTY specifiers, on both the variable and function declarations
+
+---Add "muzzle" sockets to each of the weapon meshes
 
 ---TOO MANY OTHER THINGS TO LIST RIGHT NOW...

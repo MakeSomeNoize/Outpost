@@ -341,6 +341,7 @@ void AOPPlayer::InteractLineTrace()
 		TArray<TObjectPtr<AActor>> ActorsToIgnore;
 		ActorsToIgnore.Emplace(this);
 		
+		//Show debug lines for the line trace, if they've been globally enabled.
 		if (IsValid(WorldSubsystem) && WorldSubsystem->bDebugLinesEnabled)
 		{
 			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, InteractHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
@@ -377,11 +378,6 @@ void AOPPlayer::CheckForInteractableObjects()
 void AOPPlayer::StartMelee()
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
-}
-
-void AOPPlayer::MeleeSphereTrace()
-{
-	
 }
 
 void AOPPlayer::StopMelee()
@@ -426,4 +422,10 @@ void AOPPlayer::BindExtraInputBehaviorToPlayer()
 			}
 		}
 	}
+}
+
+void AOPPlayer::CharacterDeath()
+{
+	Super::CharacterDeath();
+	
 }

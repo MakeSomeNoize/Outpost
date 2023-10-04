@@ -26,3 +26,17 @@ void AOPCharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
+const TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+{
+	//Using an empty array as a placeholder for now.
+	return TArray<FHitResult>();
+}
+
+void AOPCharacterBase::CharacterDeath()
+{
+	//Detach the character from their controller.
+	DetachFromControllerPendingDestroy();
+
+	bIsCharacterDead = true;
+}
