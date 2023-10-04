@@ -4,4 +4,5 @@
 This project makes use of the Starter Content feature pack, as well as the following Marketplace assets:
 
 Pistol Animset Pro (paid)
+
 Rifle Animset Pro (paid)
