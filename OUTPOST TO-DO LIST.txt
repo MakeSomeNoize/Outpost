@@ -1,11 +1,12 @@
----Set up basic player locomotion, aiming, jumping, crouching, and sprinting
-
 ---Start working on the pause menu and HUD
-
----Add Kubold's pistol and rifle animation packs to the project, for enemies to use
 
 ---Add Dev Assets - Brackeys' modern weapons pack to the project
 
 ---Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
+
+---Create a UInterface for the interaction system
+
+---Create a UInterface for characters
+	---Move MeleeSphereTrace() to character interface
 
 ---TOO MANY OTHER THINGS TO LIST RIGHT NOW...

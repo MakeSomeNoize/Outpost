@@ -31,20 +31,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options")
 		bool bInfiniteAmmoEnabled;
 
-	/* Extra input behavior */
-
-	//Determines if the player will need to hold the "zoom" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Extra Input Behavior")
-		bool bHoldZoomEnabled;
-
-	//Determines if the player will need to hold the "crouch" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Extra Input Behavior")
-		bool bHoldCrouchEnabled;
-
-	//Determines if the player will need to hold the "sprint" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Extra Input Behavior")
-		bool bHoldSprintEnabled;
-
 protected:
 	
 };

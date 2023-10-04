@@ -23,6 +23,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	/* General booleans */
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPCharacterBase|General Booleans")
+		bool bIsCharacterDead;
+	
 	UPROPERTY()
 		TObjectPtr<UOPWorldSubsystem> WorldSubsystem;
 };
