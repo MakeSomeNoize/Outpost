@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Subsystems/OPWorldSubsystem.h"
 #include "Interfaces/OPCharacterInterface.h"
+#include "GameplayTagContainer.h"
 #include "OPCharacterBase.generated.h"
 
 UCLASS()
@@ -23,6 +24,12 @@ public:
 	/* Overridden from OPCharacterInterface */
 
 	virtual const TArray<FHitResult> MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius) override;
+
+	/* Gameplay tags */
+
+	//All of the gameplay tags that are currently applied to this character.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OPCharacterBase")
+		FGameplayTagContainer CharacterTags;
 
 	/* Character health */
 
@@ -61,11 +68,6 @@ protected:
 	//The maximum amount of health that the character can have.
 	UPROPERTY(VisibleInstanceOnly, BlueprintGetter = GetMaxHealth, BlueprintSetter = SetMaxHealth, Category = "OPCharacterBase|Health")
 		int32 MaxHealth = 100;
-
-	/* General booleans */
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPCharacterBase|General Booleans")
-		bool bIsCharacterDead;
 
 	//An array of all the actors that were hit by the character's last melee attack.
 	UPROPERTY(BlueprintReadWrite, Category = "OPCharacterBase")

@@ -127,7 +127,7 @@ protected:
 	/* Curve assets for timelines */
 
 	//The Curve asset that will be used for the weapon zoom mechanic.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Timelines")
 		TObjectPtr<UCurveFloat> ZoomCurve;
 
 	/*
@@ -146,6 +146,10 @@ protected:
 	//The weapon that the player currently has equipped.
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
 		TObjectPtr<AOPWeapon> CurrentWeapon;
+
+	//The category that the player's currently-equipped weapon belongs to.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
+		EWeaponType CurrentWeaponType;
 
 	//The weapons that the player will spawn with, if applicable.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
@@ -167,6 +171,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Inventory|Ammo")
 		int32 SniperAmmo;
 
+	//The maximum amount of reserve ammo that the player can have of each type.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Inventory|Ammo")
+		int32 MaxReserveAmmo = 999;
+
 	/* Interaction */
 
 	//The maximum distance at which the player can interact with applicable objects.
@@ -179,30 +187,6 @@ protected:
 	//The amount of damage that the player's melee attacks inflict.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction|Melee")
 		int32 MeleeDamage = 1;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction|Melee")
-		bool bCanPlayerMelee = true;
-
-	/* General booleans */
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bIsPlayerSprinting;
-
-	//Created because bIsCrouched in ACharacter class has proven to be unreliable for UI updates.
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bIsPlayerCrouching;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bIsPlayerZoomedIn;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bCanPlayerFire = true;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bCanPlayerReload = true;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
-		bool bCanPlayerSwitch = true;
 
 	/* Look sensitivity */
 
@@ -255,6 +239,9 @@ protected:
 
 	UFUNCTION()
 		void AdjustPlayerZoom(float Value);
+
+	UFUNCTION()
+		void DebugReplenishReserveAmmo(EWeaponType AmmoType);
 	
 	void MoveForward(const FInputActionValue& Value);
 	void MoveBackward(const FInputActionValue& Value);
@@ -264,6 +251,8 @@ protected:
 
 	void MouseLook(const FInputActionValue& Value);
 	void GamepadLook(const FInputActionValue& Value);
+
+	void StartJump();
 
 	void ToggleZoom();
 	void StartZoom();

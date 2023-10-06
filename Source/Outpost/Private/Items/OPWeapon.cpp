@@ -48,27 +48,29 @@ void AOPWeapon::Shoot()
 	//If the weapon is a shotgun, then all of its shots will fire at once.
 	if (WeaponType == EWeaponType::Shotgun)
 	{
+		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+
 		for (int i = 0; i < ShotAmount; i++)
 		{
 			WeaponLineTrace();
 		}
-
-		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
 	}
 	//If the weapon is burst-fire, then its shots will fire in sequence.
-	else if (bIsWeaponBurst)
+	else if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst")) && BurstCount < ShotAmount)
 	{
-		//BURST-FIRE LOGIC GOES HERE
 		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+
+		//BURST-FIRE LOGIC GOES HERE
 	}
 	//Otherwise, only one shot will be fired.
 	else
 	{
-		WeaponLineTrace();
-
 		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+
+		WeaponLineTrace();
 	}
 	
+	if (IsValid(WorldSubsystem)) CheckInfiniteAmmoStatus();
 }
 
 void AOPWeapon::WeaponLineTrace()
@@ -109,6 +111,24 @@ FVector AOPWeapon::CalculateWeaponSpread()
 	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), SpreadRadius, SpreadRadius);
 
 	return CameraLocation + ShotAngle * MaxRange;
+}
+
+void AOPWeapon::CheckInfiniteAmmoStatus()
+{
+	//Need to get a reference to the controller of the weapon's owner.
+	TObjectPtr<AController> Controller = GetOwner()->GetInstigatorController();
+	
+	//Only the player is allowed to have infinite ammo.
+	if (IsValid(Controller) && Controller->IsPlayerController())
+	{
+		//If infinite ammo is enabled, then no ammo will be subtracted from the weapon's magazine.
+		if (WorldSubsystem->bInfiniteAmmoEnabled) return;
+		
+		//If infinite ammo with reloading is enabled, then an event will be called that replenishes the player's reserve ammo.
+		if (WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.Broadcast(WeaponType);
+	}
+	
+	CurrentMagazine--;
 }
 
 void AOPWeapon::StartFocus_Implementation()

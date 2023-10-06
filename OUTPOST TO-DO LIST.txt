@@ -1,5 +1,3 @@
----Replace HUD crosshair with one that'll look better at higher resolutions
-
 ---Create a base button class, derived from UINavComponent.
 
 ---Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
@@ -20,7 +18,7 @@
 	---Add a protected BurstCount variable to class
 	---If bIsWeaponBurst is true AND BurstCount is less than ShotAmount, then increment BurstCount and set a timer for Shoot() to be called again
 	---In the weapon's firing montage, copy the firing animation multiple times; once for each shot in the burst
-	---Once the burst-fire montage has ended, allow the player to fire again and reset BurstCount to 0 (anim notify)
+	---Once the burst-fire montage has ended, allow the player to fire again and reset BurstCount to 0 (do this inside an anim notify)
 
 ---Create UDamageType BP classes for each weapon
 

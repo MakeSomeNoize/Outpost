@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Outpost/Outpost.h"
 #include "Interfaces/OPInteractInterface.h"
+#include "GameplayTagContainer.h"
 #include "OPWeapon.generated.h"
 
 //Forward declarations.
@@ -30,6 +31,12 @@ public:
 	virtual void EndFocus_Implementation() override;
 	virtual void OnInteract_Implementation(AActor* CallingPlayer) override;
 	virtual FText GetInteractMessage_Implementation() override;
+
+	/* Gameplay tags */
+
+	//All of the gameplay tags that are currently applied to this weapon.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OPWeapon")
+		FGameplayTagContainer WeaponTags;
 
 	/* Weapon stats */
 
@@ -75,21 +82,6 @@ public:
 	//The number of shots that this weapon fires, when the trigger is pulled.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Spread")
 		int32 ShotAmount = 1;
-	
-	//Determines if this weapon is automatic, or not.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Rate of Fire")
-		bool bIsWeaponAutomatic;
-	
-	/*
-	Determines if this weapon has an additional animation-based cooldown, or not.
-	This should only apply to certain automatic weapons, and all burst-fire weapons.
-	*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Rate of Fire")
-		bool bDoesWeaponHaveAnimationCooldown;
-	
-	//Determines if this weapon is burst-fire, or not.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Rate of Fire|Burst Fire")
-		bool bIsWeaponBurst;
 
 	//How fast each shot in this weapon's bursts will fire, if applicable.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Rate of Fire|Burst Fire")
@@ -110,6 +102,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
 		TObjectPtr<UBoxComponent> InteractRadius;
 
+	/* Infinite ammo */
+
+	UFUNCTION()
+		void CheckInfiniteAmmoStatus();
+
 	void Shoot();
 	void WeaponLineTrace();
 	FVector CalculateWeaponSpread();
@@ -121,4 +118,6 @@ protected:
 	FRotator CameraRotation;
 
 	TObjectPtr<UOPWorldSubsystem> WorldSubsystem;
+
+	int32 BurstCount;
 };

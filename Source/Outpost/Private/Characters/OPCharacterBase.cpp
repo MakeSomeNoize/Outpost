@@ -50,7 +50,7 @@ void AOPCharacterBase::CharacterDeath()
 	//Detach the character from their controller.
 	DetachFromControllerPendingDestroy();
 
-	bIsCharacterDead = true;
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.IsDead"));
 }
 
 const TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)

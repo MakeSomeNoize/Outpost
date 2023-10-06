@@ -49,7 +49,9 @@ void AOPPlayer::BeginPlay()
 	WeaponArray.Emplace(NewObject<AOPWeapon>());
 
 	//LOGIC FOR ADDING STARTING WEAPONS GOES HERE
-	
+
+	//Bind a callback function to OnInfiniteAmmo delegate, if applicable.
+	if (IsValid(WorldSubsystem) && WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::DebugReplenishReserveAmmo);
 }
 
 // Called every frame
@@ -74,7 +76,7 @@ void AOPPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		if (IsValid(StrafeRightAction)) PlayerEnhancedInputComponent->BindAction(StrafeRightAction, ETriggerEvent::Triggered, this, &AOPPlayer::StrafeRight);
 		if (IsValid(GamepadMoveAction)) PlayerEnhancedInputComponent->BindAction(GamepadMoveAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadMove);
 
-		if (IsValid(JumpAction)) PlayerEnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		if (IsValid(JumpAction)) PlayerEnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AOPPlayer::StartJump);
 
 		if (IsValid(MouseLookAction)) PlayerEnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AOPPlayer::MouseLook);
 		if (IsValid(GamepadLookAction)) PlayerEnhancedInputComponent->BindAction(GamepadLookAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadLook);
@@ -168,35 +170,48 @@ void AOPPlayer::GamepadLook(const FInputActionValue& Value)
 	}
 }
 
+void AOPPlayer::StartJump()
+{
+	//If the player is currently crouching, then jumping will cause them to stop.
+	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
+	{
+		StopCrouch();
+	}
+	else
+	{
+		Jump();
+	}
+}
+
 void AOPPlayer::ToggleZoom()
 {
-	if (!bIsPlayerZoomedIn)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
 	{
 		ZoomTimeline->Play();
-		bIsPlayerZoomedIn = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
 	}
 	else
 	{
 		ZoomTimeline->Reverse();
-		bIsPlayerZoomedIn = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
 	}
 }
 
 void AOPPlayer::StartZoom()
 {
-	if (!bIsPlayerZoomedIn)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
 	{
 		ZoomTimeline->Play();
-		bIsPlayerZoomedIn = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
 	}
 }
 
 void AOPPlayer::StopZoom()
 {
-	if (bIsPlayerZoomedIn)
+	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
 	{
 		ZoomTimeline->Reverse();
-		bIsPlayerZoomedIn = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
 	}
 }
 
@@ -218,18 +233,18 @@ void AOPPlayer::UpdateZoomCurveKeys()
 
 void AOPPlayer::ToggleCrouch()
 {
-	if (!bIsPlayerCrouching)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
 	{
 		Crouch();
-		bIsPlayerCrouching = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
 
-		//If the player is sprinting, crouching will cause them to stop.
+		//If the player is sprinting, then crouching will cause them to stop.
 		StopSprint();
 	}
 	else
 	{
 		UnCrouch();
-		bIsPlayerCrouching = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
 	}
 
 	//Update the movement status in the player's HUD.
@@ -238,12 +253,12 @@ void AOPPlayer::ToggleCrouch()
 
 void AOPPlayer::StartCrouch()
 {
-	if (!bIsPlayerCrouching)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
 	{
 		Crouch();
-		bIsPlayerCrouching = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
 
-		//If the player is sprinting, crouching will cause them to stop.
+		//If the player is sprinting, then crouching will cause them to stop.
 		StopSprint();
 	}
 
@@ -253,10 +268,10 @@ void AOPPlayer::StartCrouch()
 
 void AOPPlayer::StopCrouch()
 {
-	if (bIsPlayerCrouching)
+	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
 	{
 		UnCrouch();
-		bIsPlayerCrouching = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
 	}
 
 	//Update the movement status in the player's HUD.
@@ -265,18 +280,19 @@ void AOPPlayer::StopCrouch()
 
 void AOPPlayer::ToggleSprint()
 {
-	if (!bIsPlayerSprinting)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		bIsPlayerSprinting = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
 
-		//If the player is crouching, sprinting will cause them to stand up.
+		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
+		StopZoom();
 		StopCrouch();
 	}
 	else
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		bIsPlayerSprinting = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
 	}
 
 	//Update the movement status in the player's HUD.
@@ -285,12 +301,13 @@ void AOPPlayer::ToggleSprint()
 
 void AOPPlayer::StartSprint()
 {
-	if (!bIsPlayerSprinting)
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		bIsPlayerSprinting = true;
+		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
 
-		//If the player is crouching, sprinting will cause them to stand up.
+		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
+		StopZoom();
 		StopCrouch();
 	}
 
@@ -300,10 +317,10 @@ void AOPPlayer::StartSprint()
 
 void AOPPlayer::StopSprint()
 {
-	if (bIsPlayerSprinting)
+	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		bIsPlayerSprinting = false;
+		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
 	}
 
 	//Update the movement status in the player's HUD.
@@ -502,4 +519,26 @@ void AOPPlayer::CharacterDeath()
 {
 	Super::CharacterDeath();
 	
+}
+
+void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
+{
+	//If infinite ammo with reloading is enabled, then the player will get reserve ammo every time they fire.
+	switch(AmmoType)
+	{
+		case EWeaponType::Pistol:
+			PistolAmmo = FMath::Clamp(PistolAmmo++, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Rifle:
+			RifleAmmo = FMath::Clamp(RifleAmmo++, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Shotgun:
+			ShotgunAmmo = FMath::Clamp(ShotgunAmmo++, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Sniper:
+			SniperAmmo = FMath::Clamp(SniperAmmo++, 0, MaxReserveAmmo);
+			break;
+		default:
+			break;
+	}
 }
