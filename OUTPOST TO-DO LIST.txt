@@ -1,12 +1,27 @@
----Start working on the pause menu and HUD
+---Replace HUD crosshair with one that'll look better at higher resolutions
+
+---Create a base button class, derived from UINavComponent.
 
 ---Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
 
 ---Finish building the weapon mechanics (firing, reloading, switching)
 
----Create CurrentHealth and MaxHealth variables in OPCharacterBase class, with accompanying getter and setter functions
-	---Use "BlueprintGetter" and "BlueprintSetter" UPROPERTY specifiers, on both the variable and function declarations
+---Create OnTakePointDamage() callback functions in the player and enemy classes (once enemy class is created)
 
 ---Add "muzzle" sockets to each of the weapon meshes
+
+---Create a health regeneration system for the player
+	---When the player takes damage, RegenerateHealthHandle's timer is cleared and StartHealthRegenHandle's timer is set
+	---StartHealthRegen() sets RegenerateHealthHandle's timer on a loop, according to HealthRegenRate
+	---RegenerateHealth() increases the player's health, according to HealthRegenAmount
+
+---Consider adding burst-fire functionality to OPWeapon class
+	---Add BurstFireRate and bIsWeaponBurst variables to FWeaponStats struct
+	---Add a protected BurstCount variable to class
+	---If bIsWeaponBurst is true AND BurstCount is less than ShotAmount, then increment BurstCount and set a timer for Shoot() to be called again
+	---In the weapon's firing montage, copy the firing animation multiple times; once for each shot in the burst
+	---Once the burst-fire montage has ended, allow the player to fire again and reset BurstCount to 0 (anim notify)
+
+---Create UDamageType BP classes for each weapon
 
 ---TOO MANY OTHER THINGS TO LIST RIGHT NOW...

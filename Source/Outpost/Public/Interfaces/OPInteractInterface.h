@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPInteractInterface")
 		void OnInteract(AActor* CallingPlayer);
 
+	//Returns the item's interact message, for UI purposes.
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPInteractInterface")
+		FText GetInteractMessage();
+
 protected:
 	
 };

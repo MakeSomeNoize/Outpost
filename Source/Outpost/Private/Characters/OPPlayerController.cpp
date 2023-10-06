@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/OPPlayerController.h"
+#include "OZEFunctionLibrary.h"
 
 // Sets default values
 AOPPlayerController::AOPPlayerController()
@@ -15,7 +16,8 @@ void AOPPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CustomGameOnlyInputMode(false);
+	UOZEFunctionLibrary::CustomGameOnlyInputMode(this, 0, false);
+	
 }
 
 // Called every frame
@@ -23,12 +25,4 @@ void AOPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-}
-
-void AOPPlayerController::CustomGameOnlyInputMode(bool bInConsumeCaptureMouseDown)
-{
-	FInputModeGameOnly InputMode;
-	InputMode.SetConsumeCaptureMouseDown(bInConsumeCaptureMouseDown);
-
-	SetInputMode(InputMode);
 }

@@ -8,6 +8,9 @@
 #include "Components/TimelineComponent.h"
 #include "OPPlayer.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMovementDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractDelegate, FText, ItemName);
+
 //Forward declarations.
 class UInputAction;
 class UInputMappingContext;
@@ -170,20 +173,24 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
 		float InteractRadius = 100.f;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
+		bool bCanPlayerInteract;
+
 	//The amount of damage that the player's melee attacks inflict.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction|Melee")
 		int32 MeleeDamage = 1;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
-		bool bCanPlayerInteract = true;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction|Melee")
 		bool bCanPlayerMelee = true;
 
 	/* General booleans */
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
 		bool bIsPlayerSprinting;
+
+	//Created because bIsCrouched in ACharacter class has proven to be unreliable for UI updates.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
+		bool bIsPlayerCrouching;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|General Booleans")
 		bool bIsPlayerZoomedIn;
@@ -225,6 +232,8 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "OPPlayer|Extra Input Behavior")
 		void BindExtraInputBehaviorToPlayer();
 
+	/* Sprinting */
+
 	//The player's speed when they're moving normally.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Sprinting")
 		float BaseSpeed = 600.f;
@@ -232,6 +241,14 @@ protected:
 	//The player's speed when they're sprinting.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Sprinting")
 		float SprintSpeed = 900.f;
+
+	/* Delegates */
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
+		FMovementDelegate OnMovementUpdate;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
+		FInteractDelegate OnInteractUpdate;
 
 	UPROPERTY()
 		TObjectPtr<AActor> FocusedActor;
@@ -292,4 +309,6 @@ protected:
 	FRotator CameraRotation;
 
 	FOnTimelineFloat ZoomFunction{};
+
+	FText FocusedItemText;
 };

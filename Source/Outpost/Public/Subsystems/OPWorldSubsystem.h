@@ -31,6 +31,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options")
 		bool bInfiniteAmmoEnabled;
 
+	/* Delegates */
+
+	//WORLD SUBSYSTEM DELEGATES GO HERE
+
 protected:
 	
 };

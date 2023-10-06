@@ -29,6 +29,8 @@ void AOPWeapon::BeginPlay()
 
 	//Get a reference to the world subsystem.
 	WorldSubsystem = GetWorld()->GetSubsystem<UOPWorldSubsystem>();
+
+	CurrentMagazine = MaxMagazine;
 }
 
 // Called every frame
@@ -41,12 +43,30 @@ void AOPWeapon::Tick(float DeltaTime)
 void AOPWeapon::Shoot()
 {
 	//The weapon cannot shoot, if its magazine is empty.
-	if (Stats.CurrentMagazine <= 0) return;
+	if (CurrentMagazine <= 0) return;
 
-	//Fire as many shots as the weapon is meant to. Unless the weapon is a shotgun, this loop should only iterate once.
-	for (int i = 0; i < Stats.ShotAmount; i++)
+	//If the weapon is a shotgun, then all of its shots will fire at once.
+	if (WeaponType == EWeaponType::Shotgun)
+	{
+		for (int i = 0; i < ShotAmount; i++)
+		{
+			WeaponLineTrace();
+		}
+
+		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+	}
+	//If the weapon is burst-fire, then its shots will fire in sequence.
+	else if (bIsWeaponBurst)
+	{
+		//BURST-FIRE LOGIC GOES HERE
+		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+	}
+	//Otherwise, only one shot will be fired.
+	else
 	{
 		WeaponLineTrace();
+
+		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
 	}
 	
 }
@@ -86,9 +106,9 @@ void AOPWeapon::WeaponLineTrace()
 FVector AOPWeapon::CalculateWeaponSpread()
 {
 	//The angle of the shot is randomly generated within a cone-shaped area.
-	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), Stats.SpreadRadius, Stats.SpreadRadius);
+	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), SpreadRadius, SpreadRadius);
 
-	return CameraLocation + ShotAngle * Stats.MaxRange;
+	return CameraLocation + ShotAngle * MaxRange;
 }
 
 void AOPWeapon::StartFocus_Implementation()
@@ -104,4 +124,9 @@ void AOPWeapon::EndFocus_Implementation()
 void AOPWeapon::OnInteract_Implementation(AActor* CallingPlayer)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+}
+
+FText AOPWeapon::GetInteractMessage_Implementation()
+{
+	return InteractMessage;
 }

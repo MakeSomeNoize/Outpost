@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Items/OPWeapon.h"
+#include "Interfaces/OPInteractInterface.h"
 
 // Sets default values
 AOPPlayer::AOPPlayer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -56,7 +57,7 @@ void AOPPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//InteractLineTrace();
+	InteractLineTrace();
 }
 
 // Called to bind functionality to input
@@ -172,13 +173,11 @@ void AOPPlayer::ToggleZoom()
 	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
-
 		bIsPlayerZoomedIn = true;
 	}
 	else
 	{
 		ZoomTimeline->Reverse();
-
 		bIsPlayerZoomedIn = false;
 	}
 }
@@ -188,7 +187,6 @@ void AOPPlayer::StartZoom()
 	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
-
 		bIsPlayerZoomedIn = true;
 	}
 }
@@ -198,7 +196,6 @@ void AOPPlayer::StopZoom()
 	if (bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Reverse();
-
 		bIsPlayerZoomedIn = false;
 	}
 }
@@ -221,24 +218,49 @@ void AOPPlayer::UpdateZoomCurveKeys()
 
 void AOPPlayer::ToggleCrouch()
 {
-	if (!bIsCrouched)
+	if (!bIsPlayerCrouching)
 	{
 		Crouch();
+		bIsPlayerCrouching = true;
+
+		//If the player is sprinting, crouching will cause them to stop.
+		StopSprint();
 	}
 	else
 	{
 		UnCrouch();
+		bIsPlayerCrouching = false;
 	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StartCrouch()
 {
-	if (!bIsCrouched) Crouch();
+	if (!bIsPlayerCrouching)
+	{
+		Crouch();
+		bIsPlayerCrouching = true;
+
+		//If the player is sprinting, crouching will cause them to stop.
+		StopSprint();
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StopCrouch()
 {
-	if (bIsCrouched) UnCrouch();
+	if (bIsPlayerCrouching)
+	{
+		UnCrouch();
+		bIsPlayerCrouching = false;
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::ToggleSprint()
@@ -246,15 +268,19 @@ void AOPPlayer::ToggleSprint()
 	if (!bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-
 		bIsPlayerSprinting = true;
+
+		//If the player is crouching, sprinting will cause them to stand up.
+		StopCrouch();
 	}
 	else
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-
 		bIsPlayerSprinting = false;
 	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StartSprint()
@@ -262,9 +288,14 @@ void AOPPlayer::StartSprint()
 	if (!bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-
 		bIsPlayerSprinting = true;
+
+		//If the player is crouching, sprinting will cause them to stand up.
+		StopCrouch();
 	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StopSprint()
@@ -272,9 +303,11 @@ void AOPPlayer::StopSprint()
 	if (bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-
 		bIsPlayerSprinting = false;
 	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StartFire()
@@ -324,6 +357,18 @@ void AOPPlayer::EndSwitch()
 
 void AOPPlayer::Interact()
 {
+	if (!bCanPlayerInteract) return;
+
+	//Double-check the last focused actor for an interface, before trying to interact with it.
+	if (IsValid(FocusedActor) && FocusedActor->Implements<UOPInteractInterface>())
+	{
+		IOPInteractInterface::Execute_OnInteract(FocusedActor, this);
+		bCanPlayerInteract = false;
+	}
+
+	//Update the interact prompt in the player's HUD.
+	OnInteractUpdate.Broadcast(FocusedItemText);
+
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
@@ -361,18 +406,47 @@ void AOPPlayer::CheckForInteractableObjects()
 
 	if (IsValid(HitActor))
 	{
-		//A BUNCH OF STUFF THAT COMES BEFORE
+		//If the hit actor is the same as the last focused actor, then no interface check is needed.
+		if (HitActor != FocusedActor)
+		{
+			//Check the last focused actor for an interface, and end focus if possible.
+			if (IsValid(FocusedActor) && FocusedActor->Implements<UOPInteractInterface>())
+			{
+				IOPInteractInterface::Execute_EndFocus(FocusedActor);
+				bCanPlayerInteract = false;
+			}
+
+			//Check the hit actor for an interface, and start focus if possible.
+			if (IsValid(HitActor) && HitActor->Implements<UOPInteractInterface>())
+			{
+				IOPInteractInterface::Execute_StartFocus(HitActor);
+				bCanPlayerInteract = true;
+
+				FocusedItemText = IOPInteractInterface::Execute_GetInteractMessage(HitActor);
+			}
+		}
 
 		//Regardless of what happens, a reference to the hit actor is stored.
 		FocusedActor = HitActor;
 	}
+	//For when no actors were hit by the line trace.
 	else
 	{
-		//A BUNCH OF STUFF THAT COMES BEFORE
+		//Check the last focused actor for an interface, and end focus if possible.
+		if (IsValid(FocusedActor) && FocusedActor->Implements<UOPInteractInterface>())
+		{
+			IOPInteractInterface::Execute_EndFocus(FocusedActor);
+			bCanPlayerInteract = false;
+
+			FocusedItemText = FText();
+		}
 
 		//Since no actor was hit, no reference needs to be stored.
 		FocusedActor = nullptr;
 	}
+
+	//Update the interact prompt in the player's HUD.
+	OnInteractUpdate.Broadcast(FocusedItemText);
 }
 
 void AOPPlayer::StartMelee()

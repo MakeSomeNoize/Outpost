@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/OPCharacterBase.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 AOPCharacterBase::AOPCharacterBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -17,7 +18,8 @@ void AOPCharacterBase::BeginPlay()
 
 	//Get a reference to the world subsystem.
 	WorldSubsystem = GetWorld()->GetSubsystem<UOPWorldSubsystem>();
-	
+
+	SetCurrentHealth(MaxHealth);
 }
 
 // Called every frame
@@ -27,10 +29,20 @@ void AOPCharacterBase::Tick(float DeltaTime)
 
 }
 
-const TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+void AOPCharacterBase::SetCurrentHealth(int32 NewValue)
 {
-	//Using an empty array as a placeholder for now.
-	return TArray<FHitResult>();
+	//The character's health should never go below 0, or above their max health.
+	CurrentHealth = FMath::Clamp(NewValue, 0, MaxHealth);
+
+	//BROADCAST TO "HEALTH UPDATE" DELEGATE HERE
+}
+
+void AOPCharacterBase::SetMaxHealth(int32 NewValue)
+{
+	//The character's max health should never go below what their current health is.
+	if (NewValue >= CurrentHealth) MaxHealth = NewValue;
+
+	//BROADCAST TO "HEALTH UPDATE" DELEGATE HERE
 }
 
 void AOPCharacterBase::CharacterDeath()
@@ -39,4 +51,12 @@ void AOPCharacterBase::CharacterDeath()
 	DetachFromControllerPendingDestroy();
 
 	bIsCharacterDead = true;
+}
+
+const TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+{
+	//LOGIC FOR PERFORMING A SPHERE TRACE GOES HERE
+	
+	//Using an empty array as a placeholder for now.
+	return TArray<FHitResult>();
 }
