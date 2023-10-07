@@ -94,7 +94,7 @@ void AOPWeapon::WeaponLineTrace()
 		FVector EndLocation = CalculateWeaponSpread();
 
 		//Show debug lines for the line trace, if they've been globally enabled.
-		if (IsValid(WorldSubsystem) && WorldSubsystem->bDebugLinesEnabled)
+		if (IsValid(WorldSubsystem) && WorldSubsystem->bWeaponDebugLinesEnabled)
 		{
 			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, WeaponHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
 		}
@@ -146,7 +146,12 @@ void AOPWeapon::OnInteract_Implementation(AActor* CallingPlayer)
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
-FText AOPWeapon::GetInteractMessage_Implementation()
+FText AOPWeapon::GetInteractableObjectName_Implementation()
 {
-	return InteractMessage;
+	return WeaponName;
+}
+
+EInteractType AOPWeapon::GetInteractableObjectType_Implementation()
+{
+	return ObjectType;
 }

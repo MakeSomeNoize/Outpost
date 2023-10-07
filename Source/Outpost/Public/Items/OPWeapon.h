@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Outpost/Outpost.h"
 #include "Interfaces/OPInteractInterface.h"
 #include "GameplayTagContainer.h"
 #include "OPWeapon.generated.h"
@@ -30,7 +29,8 @@ public:
 	virtual void StartFocus_Implementation() override;
 	virtual void EndFocus_Implementation() override;
 	virtual void OnInteract_Implementation(AActor* CallingPlayer) override;
-	virtual FText GetInteractMessage_Implementation() override;
+	virtual FText GetInteractableObjectName_Implementation() override;
+	virtual EInteractType GetInteractableObjectType_Implementation() override;
 
 	/* Gameplay tags */
 
@@ -40,13 +40,17 @@ public:
 
 	/* Weapon stats */
 
+	//The name of this weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Info")
+		FText WeaponName;
+
 	//The category that this weapon belongs to.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Info")
-		EWeaponType WeaponType = EWeaponType::Unarmed;
+		EWeaponType WeaponType;
 
-	//The message that should be shown when this weapon can be interacted with.
+	//The type of interactable object that this weapon is.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Info")
-		FText InteractMessage = FText::FromString("Pick up Weapon");
+		EInteractType ObjectType;
 
 	//The amount of damage that this weapon inflicts, per shot.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Damage")

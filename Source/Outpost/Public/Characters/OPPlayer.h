@@ -6,10 +6,11 @@
 #include "Characters/OPCharacterBase.h"
 #include "InputActionValue.h"
 #include "Components/TimelineComponent.h"
+#include "OPEnums.h"
 #include "OPPlayer.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMovementDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractDelegate, FText, ItemName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractDelegate, FText, ObjectName, EInteractType, ObjectType);
 
 //Forward declarations.
 class UInputAction;
@@ -298,6 +299,4 @@ protected:
 	FRotator CameraRotation;
 
 	FOnTimelineFloat ZoomFunction{};
-
-	FText FocusedItemText;
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "OPEnums.h"
 #include "OPInteractInterface.generated.h"
 
 // This class does not need to be modified.
@@ -44,9 +45,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPInteractInterface")
 		void OnInteract(AActor* CallingPlayer);
 
-	//Returns the item's interact message, for UI purposes.
+	//Returns the interactable object's name, for UI purposes.
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPInteractInterface")
-		FText GetInteractMessage();
+		FText GetInteractableObjectName();
+
+	//Returns the interactable object's type, for UI purposes.
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPInteractInterface")
+		EInteractType GetInteractableObjectType();
 
 protected:
 	

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Outpost/Outpost.h"
+#include "OPEnums.h"
 #include "OPWorldSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInfiniteAmmoWithReloadDelegate, EWeaponType, CurrentWeaponType);
@@ -26,22 +26,26 @@ public:
 
 	/* Debug options */
 	
-	//Determines whether debug lines for traces are visible, or not. 
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options")
-		bool bDebugLinesEnabled;
+	//Determines whether debug lines for interact traces are visible, or not. 
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+		bool bInteractDebugLinesEnabled;
+		
+	//Determines whether debug lines for weapon traces are visible, or not. 
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+		bool bWeaponDebugLinesEnabled;
 
 	/*
 	Determines if the player's weapons have infinite ammo, or not.
 	This version prevents the weapons' magazines from going empty.
 	*/
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Infinite Ammo")
 		bool bInfiniteAmmoEnabled;
 		
 	/*
 	Determines if the player's weapons have infinite ammo, or not.
 	This version prevents the player's reserve ammo from going empty.
 	*/
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Infinite Ammo")
 		bool bInfiniteAmmoWithReloadEnabled;
 
 	/* Delegates */

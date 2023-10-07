@@ -189,6 +189,9 @@ void AOPPlayer::ToggleZoom()
 	{
 		ZoomTimeline->Play();
 		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+
+		//If the player is sprinting, then zooming in will cause them to stop.
+		StopSprint();
 	}
 	else
 	{
@@ -203,6 +206,9 @@ void AOPPlayer::StartZoom()
 	{
 		ZoomTimeline->Play();
 		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+
+		//If the player is sprinting, then zooming in will cause them to stop.
+		StopSprint();
 	}
 }
 
@@ -381,11 +387,11 @@ void AOPPlayer::Interact()
 	{
 		IOPInteractInterface::Execute_OnInteract(FocusedActor, this);
 		bCanPlayerInteract = false;
+
+		//Clear the interact prompt in the player's HUD.
+		OnInteractUpdate.Broadcast(FText(), EInteractType::NONE);
 	}
-
-	//Update the interact prompt in the player's HUD.
-	OnInteractUpdate.Broadcast(FocusedItemText);
-
+	
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
@@ -404,7 +410,7 @@ void AOPPlayer::InteractLineTrace()
 		ActorsToIgnore.Emplace(this);
 		
 		//Show debug lines for the line trace, if they've been globally enabled.
-		if (IsValid(WorldSubsystem) && WorldSubsystem->bDebugLinesEnabled)
+		if (IsValid(WorldSubsystem) && WorldSubsystem->bInteractDebugLinesEnabled)
 		{
 			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, InteractHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
 		}
@@ -431,6 +437,9 @@ void AOPPlayer::CheckForInteractableObjects()
 			{
 				IOPInteractInterface::Execute_EndFocus(FocusedActor);
 				bCanPlayerInteract = false;
+
+				//Clear the interact prompt in the player's HUD.
+				OnInteractUpdate.Broadcast(FText(), EInteractType::NONE);
 			}
 
 			//Check the hit actor for an interface, and start focus if possible.
@@ -439,7 +448,8 @@ void AOPPlayer::CheckForInteractableObjects()
 				IOPInteractInterface::Execute_StartFocus(HitActor);
 				bCanPlayerInteract = true;
 
-				FocusedItemText = IOPInteractInterface::Execute_GetInteractMessage(HitActor);
+				//Update the interact prompt in the player's HUD, with information about the focused object.
+				OnInteractUpdate.Broadcast(IOPInteractInterface::Execute_GetInteractableObjectName(HitActor), IOPInteractInterface::Execute_GetInteractableObjectType(HitActor));
 			}
 		}
 
@@ -455,15 +465,13 @@ void AOPPlayer::CheckForInteractableObjects()
 			IOPInteractInterface::Execute_EndFocus(FocusedActor);
 			bCanPlayerInteract = false;
 
-			FocusedItemText = FText();
+			//Clear the interact prompt in the player's HUD.
+			OnInteractUpdate.Broadcast(FText(), EInteractType::NONE);
 		}
 
 		//Since no actor was hit, no reference needs to be stored.
 		FocusedActor = nullptr;
 	}
-
-	//Update the interact prompt in the player's HUD.
-	OnInteractUpdate.Broadcast(FocusedItemText);
 }
 
 void AOPPlayer::StartMelee()
