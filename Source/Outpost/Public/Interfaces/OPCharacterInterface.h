@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Items/OPWeapon.h"
 #include "OPCharacterInterface.generated.h"
 
 // This class does not need to be modified.
@@ -32,6 +33,13 @@ public:
 	*/
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Melee")
 		const TArray<FHitResult> MeleeSphereTrace(FVector MeleeStart, FVector MeleeEnd, float Radius);
+
+	/*
+	Picks up a weapon, and adds it to the player's inventory.
+	@param	NewWeapon	A reference to the weapon that was just picked up.
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Inventory")
+		void PickUpWeapon(AOPWeapon* NewWeapon);
 
 protected:
 	

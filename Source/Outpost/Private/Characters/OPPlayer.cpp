@@ -48,10 +48,33 @@ void AOPPlayer::BeginPlay()
 	//Places a dummy "weapon" in the player's inventory, so WeaponArray will never be empty.
 	WeaponArray.Emplace(NewObject<AOPWeapon>());
 
-	//LOGIC FOR ADDING STARTING WEAPONS GOES HERE
+	if (IsValid(StartingWeaponClass))
+	{
+		FAttachmentTransformRules StartingRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
+		
+		TObjectPtr<AOPWeapon> StartingWeapon = GetWorld()->SpawnActor<AOPWeapon>(StartingWeaponClass);
+
+		/*
+		The player is set as the starting weapon's owner, it gets attached to their mesh...
+		...The starting weapon's mesh no longer collides with pawns, or casts shadows...
+		...Finally, it is added to the player's weapon array, and set as their current weapon.
+		*/
+		StartingWeapon->SetOwner(this);
+		StartingWeapon->AttachToComponent(GetMesh(), StartingRules, TEXT("FPS_Weapon_L"));
+		StartingWeapon->WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		StartingWeapon->WeaponMesh->SetCastShadow(false);
+		WeaponArray.Emplace(StartingWeapon);
+		CurrentWeapon = StartingWeapon;
+		CurrentWeaponType = CurrentWeapon->WeaponType;
+	}
+	else
+	{
+		CurrentWeapon = WeaponArray[0];
+	}
 
 	//Bind a callback function to OnInfiniteAmmo delegate, if applicable.
 	if (IsValid(WorldSubsystem) && WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::DebugReplenishReserveAmmo);
+	
 }
 
 // Called every frame
@@ -335,47 +358,270 @@ void AOPPlayer::StopSprint()
 
 void AOPPlayer::StartFire()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	if (!IsValid(CurrentWeapon) || CurrentWeapon->WeaponType == EWeaponType::NONE) return;
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"))) return;
+	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"))) return;
+	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.AnimationCooldownActive"))) return;
+
+	if (CurrentWeapon->CurrentMagazine <= 0)
+	{
+		//PLAY DRY-FIRE MONTAGE HERE
+
+		return;
+	}
+
+	FireWeapon();
+
+	//If the current weapon is automatic, then continue firing on a looping timer.
+	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic")))
+	{
+		GetWorldTimerManager().SetTimer(FireHandle, this, &AOPPlayer::FireWeapon, CurrentWeapon->FireRate, true);
+	}
 }
 
 void AOPPlayer::FireWeapon()
 {
+	if (!IsValid(CurrentWeapon)) return;	
+
+	//PLAY THE CURRENT WEAPON'S FIRING MONTAGE HERE
 	
+	CurrentWeapon->Shoot();
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
 }
 
 void AOPPlayer::StopFire()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	GetWorldTimerManager().ClearTimer(FireHandle);
+	
 }
 
 void AOPPlayer::StartReload()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	if (!IsValid(CurrentWeapon) || CurrentWeapon->WeaponType == EWeaponType::NONE) return;
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"))) return;
+
+	//If the player doesn't have any reserve ammo for their current weapon, then don't bother trying to reload.
+	switch (CurrentWeaponType)
+	{
+		case EWeaponType::Pistol:
+			if (PistolAmmo <= 0) return;
+			break;
+		case EWeaponType::Rifle:
+			if (RifleAmmo <= 0) return;
+			break;
+		case EWeaponType::Shotgun:
+			if (ShotgunAmmo <= 0) return;
+			break;
+		case EWeaponType::Sniper:
+			if (SniperAmmo <= 0) return;
+			break;
+		default:
+			break;
+	}
+	
+	StopFire();
+	StopZoom();
+
+	//The player is temporarily prevented from firing, reloading, or switching weapons.
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+
+	EndReload(); //PLACEHOLDER
+
+	//PLAYING OF RELOAD MONTAGE GOES HERE
+	//STARTING OF TIMER FOR ENDRELOAD() GOES HERE
 }
 
 void AOPPlayer::EndReload()
 {
-	
+	if (!IsValid(CurrentWeapon)) return;
+
+	//The player is once again allowed to fire, reload, and switch weapons.
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+
+	//The current weapon's category determines which type of reserve ammo will be used.
+	switch (CurrentWeaponType)
+	{
+		case EWeaponType::Pistol:
+			TakeAmmoFromReserve(PistolAmmo);
+			break;
+		case EWeaponType::Rifle:
+			TakeAmmoFromReserve(RifleAmmo);
+			break;
+		case EWeaponType::Shotgun:
+			TakeAmmoFromReserve(ShotgunAmmo);
+			break;
+		case EWeaponType::Sniper:
+			TakeAmmoFromReserve(SniperAmmo);
+			break;
+		default:
+			break;
+	}
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
 }
 
-void AOPPlayer::TakeAmmoFromReserve(int32& AmmoToTake)
+void AOPPlayer::TakeAmmoFromReserve(int32& ReserveAmmo)
 {
-	
+	int32 AmmoUsed = CurrentWeapon->MaxMagazine - CurrentWeapon->CurrentMagazine;
+
+	//If the player can perform a full reload, then it will be done...
+	if (ReserveAmmo - AmmoUsed >= 0)
+	{
+		CurrentWeapon->CurrentMagazine = CurrentWeapon->MaxMagazine;
+		ReserveAmmo -= AmmoUsed;
+	}
+	//...Otherwise, whatever reserve ammo's left will go into the magazine.
+	else
+	{
+		CurrentWeapon->CurrentMagazine += ReserveAmmo;
+		ReserveAmmo = 0;
+	}
 }
 
 void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	//The player can't switch weapons if they only have one.
+	if (!IsValid(CurrentWeapon) && WeaponArray.Num() < 2) return;
+	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"))) return;
+
+	StopFire();
+	StopZoom();
+
+	//For when the player is unarmed.
+	if (CurrentWeapon == WeaponArray[0])
+	{
+		//If the player is unarmed, then switching "backwards" will equip the last weapon in the array.
+		if (Value.GetMagnitude() < 0)
+		{
+			StartSwitch(WeaponArray.Last());
+		}
+		else if (Value.GetMagnitude() > 0)
+		{
+			StartSwitch(WeaponArray[1]);
+		}
+	}
+	//For when the player is holding their first weapon.
+	else if (CurrentWeapon == WeaponArray[1])
+	{
+		//If the player is holding their first weapon, then switching "forwards" will equip the last weapon in the array.
+		if (Value.GetMagnitude() < 0)
+		{
+			StartSwitch(WeaponArray.Last());
+		}
+		else if (Value.GetMagnitude() > 0)
+		{
+			if (WeaponArray.Num() >= 3)
+			{
+				StartSwitch(WeaponArray[2]);
+			}
+			else
+			{
+				StartSwitch(CurrentWeapon);
+			}
+		}
+	}
+	//For when the player is holding their second weapon, and on.
+	else
+	{
+		if (Value.GetMagnitude() < 0)
+		{
+			StartSwitch(WeaponArray[WeaponArray.Find(CurrentWeapon) - 1]);
+		}
+		else if (Value.GetMagnitude() > 0)
+		{
+			//If the player is holding the last weapon in the array, then switching "forwards" will equip their first weapon.
+			if (CurrentWeapon == WeaponArray.Last())
+			{
+				StartSwitch(WeaponArray[1]);
+			}
+			else
+			{
+				StartSwitch(WeaponArray[WeaponArray.Find(CurrentWeapon) + 1]);
+			}
+		}
+	}
 }
 
-void AOPPlayer::StartSwitch()
+void AOPPlayer::StartSwitch(AOPWeapon* NewWeapon)
 {
-	
+	if (!IsValid(NewWeapon)) return;
+
+	//The player is temporarily prevented from firing, reloading, or switching weapons.
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
+	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+
+	//PLAY UNEQUIP MONTAGE FOR CURRENT WEAPON HERE
+
+	//An FTimerDelegate is needed, to call a function with parameters on a timer.
+	FTimerDelegate SwitchDelegate;
+	SwitchDelegate.BindUFunction(this, TEXT("EndSwitch"), NewWeapon);
+
+	//Set a timer for when weapon switching will end.
+	GetWorldTimerManager().SetTimer(SwitchHandle, SwitchDelegate, 0.1f, false); //INRATE IS A PLACEHOLDER VALUE
 }
 
-void AOPPlayer::EndSwitch()
+void AOPPlayer::EndSwitch(AOPWeapon* NewWeapon)
 {
-	
+	if (!IsValid(NewWeapon)) return;
+
+	HideAllUnequippedWeapons(NewWeapon);
+
+	//PLAY EQUIP MONTAGE FOR NEW WEAPON HERE
+
+	//Set a timer for when player tags will be re-added.
+	GetWorldTimerManager().SetTimer(SwitchHandle, this, &AOPPlayer::AddPlayerTagsAfterWeaponSwitch, 0.1f, false); //INRATE IS A PLACEHOLDER VALUE
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
+}
+
+void AOPPlayer::HideAllUnequippedWeapons(AOPWeapon* NewWeapon)
+{
+	if (!IsValid(NewWeapon)) return;
+
+	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
+	{
+		//If the weapon references don't match, then hide the weapon...
+		if (Index != NewWeapon)
+		{
+			Index->SetActorHiddenInGame(true);
+		}
+		//...But if they DO match, then show the weapon and designate it as the current weapon.
+		else
+		{
+			Index->SetActorHiddenInGame(false);
+
+			CurrentWeapon = Index;
+			CurrentWeaponType = Index->WeaponType;
+		}
+	}
+
+	//FOR TESTING ONLY
+	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
+	{
+		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Index %u: %s"), WeaponArray.Find(Index), *(Index->WeaponName.ToString()))); //FOR TESTING ONLY
+	}
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
+}
+
+void AOPPlayer::AddPlayerTagsAfterWeaponSwitch()
+{
+	//The player is once again allowed to fire, reload, and switch weapons.
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
+	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+
+	GetWorldTimerManager().ClearTimer(SwitchHandle);
 }
 
 void AOPPlayer::Interact()
@@ -391,8 +637,6 @@ void AOPPlayer::Interact()
 		//Clear the interact prompt in the player's HUD.
 		OnInteractUpdate.Broadcast(FText(), EInteractType::NONE);
 	}
-	
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
 void AOPPlayer::InteractLineTrace()
@@ -476,7 +720,7 @@ void AOPPlayer::CheckForInteractableObjects()
 
 void AOPPlayer::StartMelee()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	
 }
 
 void AOPPlayer::StopMelee()
@@ -549,4 +793,42 @@ void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
 		default:
 			break;
 	}
+}
+
+void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
+{
+	if (!IsValid(NewWeapon)) return;
+
+	//The player cannot pick up more than one of the same weapon.
+	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
+	{
+		if (Index->WeaponName.EqualTo(NewWeapon->WeaponName)) return;
+	}
+
+	FAttachmentTransformRules StartingRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
+
+	/*
+	The player is set as the weapon's owner, it gets attached to their mesh...
+	...The weapon's mesh no longer collides with pawns, or casts shadows...
+	...And finally, it is added to the player's weapon array.
+	*/
+	NewWeapon->SetOwner(this);
+	NewWeapon->AttachToComponent(GetMesh(), StartingRules, TEXT("FPS_Weapon_L"));
+	NewWeapon->WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	WeaponArray.Emplace(NewWeapon);
+
+	//Sort the weapon array by category, in ascending order.
+	WeaponArray.Sort([](const AOPWeapon& a, const AOPWeapon& b) {return a.WeaponType < b.WeaponType;});
+
+	//If this is the first weapon that the player has picked up, then it will be automatically equipped.
+	if (WeaponArray.Num() <= 2)
+	{
+		HideAllUnequippedWeapons(NewWeapon);
+	}
+	else
+	{
+		HideAllUnequippedWeapons(CurrentWeapon);
+	}
+
+	//LOGIC FOR BROADCASTING TO "PICK UP ITEM" DELEGATE GOES HERE
 }

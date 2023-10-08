@@ -11,6 +11,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMovementDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractDelegate, FText, ObjectName, EInteractType, ObjectType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponDelegate);
 
 //Forward declarations.
 class UInputAction;
@@ -48,7 +49,7 @@ protected:
 
 	/* Overridden from OPCharacterInterface */
 
-	//PLAYER-SPECIFIC INTERFACE FUNCTIONS WILL BE DECLARED HERE
+	virtual void PickUpWeapon_Implementation(AOPWeapon* NewWeapon) override;
 
 	/* Actor and scene components */
 
@@ -152,9 +153,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
 		EWeaponType CurrentWeaponType;
 
-	//The weapons that the player will spawn with, if applicable.
+	//The class of the weapon that the player will spawn with, if applicable.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
-		TArray<TObjectPtr<AOPWeapon>> StartingWeapons;
+		TSubclassOf<AOPWeapon> StartingWeaponClass;
 
 	//The amount of pistol ammo that the player has in reserve.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Inventory|Ammo")
@@ -235,11 +236,17 @@ protected:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
 		FInteractDelegate OnInteractUpdate;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
+		FWeaponDelegate OnWeaponUpdate;
+
 	UPROPERTY()
 		TObjectPtr<AActor> FocusedActor;
 
 	UFUNCTION()
 		void AdjustPlayerZoom(float Value);
+
+	UFUNCTION()
+		void EndSwitch(AOPWeapon* NewWeapon);
 
 	UFUNCTION()
 		void DebugReplenishReserveAmmo(EWeaponType AmmoType);
@@ -273,11 +280,12 @@ protected:
 
 	void StartReload();
 	void EndReload();
-	void TakeAmmoFromReserve(int32& AmmoToTake);
+	void TakeAmmoFromReserve(int32& ReserveAmmo);
 
 	void CycleWeapons(const FInputActionValue& Value);
-	void StartSwitch();
-	void EndSwitch();
+	void StartSwitch(AOPWeapon* NewWeapon);
+	void HideAllUnequippedWeapons(AOPWeapon* NewWeapon);
+	void AddPlayerTagsAfterWeaponSwitch();
 	
 	void Interact();
 	void InteractLineTrace();

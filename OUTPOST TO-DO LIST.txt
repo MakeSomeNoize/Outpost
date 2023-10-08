@@ -1,12 +1,18 @@
----Create a base button class, derived from UINavComponent.
+---Set InteractRadius in OPWeapon class to ignore weapon traces
+
+---Search Google Fonts for a desirable font to use for this project
+
+---Study UI Material Lab example project, and migrate desired UI assets out of it
 
 ---Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
-
----Finish building the weapon mechanics (firing, reloading, switching)
 
 ---Create OnTakePointDamage() callback functions in the player and enemy classes (once enemy class is created)
 
 ---Add "muzzle" sockets to each of the weapon meshes
+
+---Search sound packs for suitable weapon sounds
+
+---Add VFX pack to project
 
 ---Create a health regeneration system for the player
 	---When the player takes damage, RegenerateHealthHandle's timer is cleared and StartHealthRegenHandle's timer is set
@@ -14,12 +20,13 @@
 	---RegenerateHealth() increases the player's health, according to HealthRegenAmount
 
 ---Consider adding burst-fire functionality to OPWeapon class
-	---Add BurstFireRate and bIsWeaponBurst variables to FWeaponStats struct
-	---Add a protected BurstCount variable to class
-	---If bIsWeaponBurst is true AND BurstCount is less than ShotAmount, then increment BurstCount and set a timer for Shoot() to be called again
+	---If weapon has "IsBurst" tag AND BurstCount is less than ShotAmount, then increment BurstCount and set a timer for Shoot() to be called again
+	---Start an animation cooldown
 	---In the weapon's firing montage, copy the firing animation multiple times; once for each shot in the burst
-	---Once the burst-fire montage has ended, allow the player to fire again and reset BurstCount to 0 (do this inside an anim notify)
+	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0 (do this inside an anim notify)
 
 ---Create UDamageType BP classes for each weapon
+
+---Create OPSaveGame class in C++
 
 ---TOO MANY OTHER THINGS TO LIST RIGHT NOW...

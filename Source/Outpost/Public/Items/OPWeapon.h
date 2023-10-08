@@ -32,6 +32,11 @@ public:
 	virtual FText GetInteractableObjectName_Implementation() override;
 	virtual EInteractType GetInteractableObjectType_Implementation() override;
 
+	/* Actor and scene components */
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
+		TObjectPtr<UStaticMeshComponent> WeaponMesh;
+
 	/* Gameplay tags */
 
 	//All of the gameplay tags that are currently applied to this weapon.
@@ -91,6 +96,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Weapon Stats|Rate of Fire|Burst Fire")
 		float BurstFireRate = 1.f;
 
+	void Shoot();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -101,19 +108,21 @@ protected:
 		TObjectPtr<USceneComponent> WeaponRoot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
-		TObjectPtr<UStaticMeshComponent> WeaponMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
 		TObjectPtr<UBoxComponent> InteractRadius;
 
 	/* Infinite ammo */
 
 	UFUNCTION()
 		void CheckInfiniteAmmoStatus();
-
-	void Shoot();
+	
 	void WeaponLineTrace();
 	FVector CalculateWeaponSpread();
+
+	void EndFiringCooldown();
+	void EndAnimationCooldown();
+
+	FTimerHandle FiringCooldownHandle;
+	FTimerHandle AnimationCooldownHandle;
 
 	FHitResult WeaponHitResult;
 	

@@ -4,6 +4,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Subsystems/OPWorldSubsystem.h"
 #include "Components/BoxComponent.h"
+#include "Interfaces/OPCharacterInterface.h"
 
 // Sets default values
 AOPWeapon::AOPWeapon()
@@ -31,6 +32,19 @@ void AOPWeapon::BeginPlay()
 	WorldSubsystem = GetWorld()->GetSubsystem<UOPWorldSubsystem>();
 
 	CurrentMagazine = MaxMagazine;
+
+	//Shotguns are not allowed to be automatic or burst-fire.
+	if (WeaponType == EWeaponType::Shotgun)
+	{
+		WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"));
+		WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"));
+	}
+
+	//Automatic weapons are not allowed to ALSO be burst-fire.
+	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"))) WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"));
+
+	//Burst-fire weapons are not allowed to ALSO be automatic.
+	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"))) WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"));
 }
 
 // Called every frame
@@ -48,26 +62,33 @@ void AOPWeapon::Shoot()
 	//If the weapon is a shotgun, then all of its shots will fire at once.
 	if (WeaponType == EWeaponType::Shotgun)
 	{
-		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
-
 		for (int i = 0; i < ShotAmount; i++)
 		{
 			WeaponLineTrace();
 		}
 	}
-	//If the weapon is burst-fire, then its shots will fire in sequence.
-	else if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst")) && BurstCount < ShotAmount)
+	
+	//If the weapon is burst-fire, then its shots will fire in sequence...
+	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst")) && BurstCount < ShotAmount)
 	{
 		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
 
 		//BURST-FIRE LOGIC GOES HERE
 	}
-	//Otherwise, only one shot will be fired.
+	//...Otherwise, only one shot will be fired.
 	else
 	{
 		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
 
 		WeaponLineTrace();
+	}
+
+	//If the weapon is semi-automatic, then start a cooldown and set a timer for when the cooldown will end.
+	if (!WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic")))
+	{
+		WeaponTags.AddTag(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"));
+
+		GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, FireRate, false);
 	}
 	
 	if (IsValid(WorldSubsystem)) CheckInfiniteAmmoStatus();
@@ -113,6 +134,16 @@ FVector AOPWeapon::CalculateWeaponSpread()
 	return CameraLocation + ShotAngle * MaxRange;
 }
 
+void AOPWeapon::EndFiringCooldown()
+{
+	WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"));
+}
+
+void AOPWeapon::EndAnimationCooldown()
+{
+	WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.AnimationCooldownActive"));
+}
+
 void AOPWeapon::CheckInfiniteAmmoStatus()
 {
 	//Need to get a reference to the controller of the weapon's owner.
@@ -143,6 +174,9 @@ void AOPWeapon::EndFocus_Implementation()
 
 void AOPWeapon::OnInteract_Implementation(AActor* CallingPlayer)
 {
+	//Execute weapon pick-up logic on the player.
+	if (CallingPlayer->Implements<UOPCharacterInterface>()) IOPCharacterInterface::Execute_PickUpWeapon(CallingPlayer, this);
+
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
