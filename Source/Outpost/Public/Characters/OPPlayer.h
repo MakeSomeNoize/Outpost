@@ -6,7 +6,6 @@
 #include "Characters/OPCharacterBase.h"
 #include "InputActionValue.h"
 #include "Components/TimelineComponent.h"
-#include "OPEnums.h"
 #include "OPPlayer.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMovementDelegate);
@@ -227,6 +226,26 @@ protected:
 	//The player's speed when they're sprinting.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Sprinting")
 		float SprintSpeed = 900.f;
+
+	/* Booleans */
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bIsPlayerCrouching;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bIsPlayerSprinting;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bIsPlayerZoomedIn;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bCanPlayerFire = true;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bCanPlayerReload = true;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bCanPlayerSwitch = true;
 
 	/* Delegates */
 

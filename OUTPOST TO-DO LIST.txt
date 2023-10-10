@@ -1,5 +1,3 @@
----Set InteractRadius in OPWeapon class to ignore weapon traces
-
 ---Search Google Fonts for a desirable font to use for this project
 
 ---Study UI Material Lab example project, and migrate desired UI assets out of it
@@ -11,8 +9,6 @@
 ---Add "muzzle" sockets to each of the weapon meshes
 
 ---Search sound packs for suitable weapon sounds
-
----Add VFX pack to project
 
 ---Create a health regeneration system for the player
 	---When the player takes damage, RegenerateHealthHandle's timer is cleared and StartHealthRegenHandle's timer is set

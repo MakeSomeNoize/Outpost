@@ -3,7 +3,6 @@
 #include "Items/OPWeapon.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Subsystems/OPWorldSubsystem.h"
-#include "Components/BoxComponent.h"
 #include "Interfaces/OPCharacterInterface.h"
 
 // Sets default values
@@ -17,9 +16,8 @@ AOPWeapon::AOPWeapon()
 
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("Weapon Mesh");
 	WeaponMesh->SetupAttachment(WeaponRoot);
-
-	InteractRadius = CreateDefaultSubobject<UBoxComponent>("Interact Radius");
-	InteractRadius->SetupAttachment(WeaponRoot);
+	WeaponMesh->SetGenerateOverlapEvents(false);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	
 }
 
@@ -31,20 +29,21 @@ void AOPWeapon::BeginPlay()
 	//Get a reference to the world subsystem.
 	WorldSubsystem = GetWorld()->GetSubsystem<UOPWorldSubsystem>();
 
-	CurrentMagazine = MaxMagazine;
+	Stats.CurrentMagazine = Stats.MaxMagazine;
 
 	//Shotguns are not allowed to be automatic or burst-fire.
-	if (WeaponType == EWeaponType::Shotgun)
+	if (Stats.WeaponType == EWeaponType::Shotgun)
 	{
-		WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"));
-		WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"));
+		Stats.bIsWeaponBurst = false;
+		Stats.bIsWeaponAutomatic = false;
 	}
 
 	//Automatic weapons are not allowed to ALSO be burst-fire.
-	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"))) WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"));
+	if (Stats.bIsWeaponAutomatic) Stats.bIsWeaponBurst = false;
 
 	//Burst-fire weapons are not allowed to ALSO be automatic.
-	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst"))) WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic"));
+	if (Stats.bIsWeaponBurst) Stats.bIsWeaponAutomatic = false;
+	
 }
 
 // Called every frame
@@ -57,19 +56,19 @@ void AOPWeapon::Tick(float DeltaTime)
 void AOPWeapon::Shoot()
 {
 	//The weapon cannot shoot, if its magazine is empty.
-	if (CurrentMagazine <= 0) return;
+	if (Stats.CurrentMagazine <= 0) return;
 
 	//If the weapon is a shotgun, then all of its shots will fire at once.
-	if (WeaponType == EWeaponType::Shotgun)
+	if (Stats.WeaponType == EWeaponType::Shotgun)
 	{
-		for (int i = 0; i < ShotAmount; i++)
+		for (int i = 0; i < Stats.ShotAmount; i++)
 		{
 			WeaponLineTrace();
 		}
 	}
 	
 	//If the weapon is burst-fire, then its shots will fire in sequence...
-	if (WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsBurst")) && BurstCount < ShotAmount)
+	if (Stats.bIsWeaponBurst && BurstCount < Stats.ShotAmount)
 	{
 		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
 
@@ -84,11 +83,11 @@ void AOPWeapon::Shoot()
 	}
 
 	//If the weapon is semi-automatic, then start a cooldown and set a timer for when the cooldown will end.
-	if (!WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic")))
+	if (!Stats.bIsWeaponAutomatic)
 	{
-		WeaponTags.AddTag(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"));
+		bFiringCooldownActive = true;
 
-		GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, FireRate, false);
+		GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, Stats.FireRate, false);
 	}
 	
 	if (IsValid(WorldSubsystem)) CheckInfiniteAmmoStatus();
@@ -129,19 +128,19 @@ void AOPWeapon::WeaponLineTrace()
 FVector AOPWeapon::CalculateWeaponSpread()
 {
 	//The angle of the shot is randomly generated within a cone-shaped area.
-	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), SpreadRadius, SpreadRadius);
+	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), Stats.SpreadRadius, Stats.SpreadRadius);
 
-	return CameraLocation + ShotAngle * MaxRange;
+	return CameraLocation + ShotAngle * Stats.MaxRange;
 }
 
 void AOPWeapon::EndFiringCooldown()
 {
-	WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"));
+	bFiringCooldownActive = false;
 }
 
 void AOPWeapon::EndAnimationCooldown()
 {
-	WeaponTags.RemoveTag(FGameplayTag::RequestGameplayTag("Weapon.AnimationCooldownActive"));
+	bAnimationCooldownActive = false;
 }
 
 void AOPWeapon::CheckInfiniteAmmoStatus()
@@ -156,10 +155,10 @@ void AOPWeapon::CheckInfiniteAmmoStatus()
 		if (WorldSubsystem->bInfiniteAmmoEnabled) return;
 		
 		//If infinite ammo with reloading is enabled, then an event will be called that replenishes the player's reserve ammo.
-		if (WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.Broadcast(WeaponType);
+		if (WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.Broadcast(Stats.WeaponType);
 	}
 	
-	CurrentMagazine--;
+	Stats.CurrentMagazine--;
 }
 
 void AOPWeapon::StartFocus_Implementation()
@@ -176,16 +175,14 @@ void AOPWeapon::OnInteract_Implementation(AActor* CallingPlayer)
 {
 	//Execute weapon pick-up logic on the player.
 	if (CallingPlayer->Implements<UOPCharacterInterface>()) IOPCharacterInterface::Execute_PickUpWeapon(CallingPlayer, this);
-
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
 }
 
 FText AOPWeapon::GetInteractableObjectName_Implementation()
 {
-	return WeaponName;
+	return Stats.WeaponName;
 }
 
 EInteractType AOPWeapon::GetInteractableObjectType_Implementation()
 {
-	return ObjectType;
+	return Stats.ObjectType;
 }

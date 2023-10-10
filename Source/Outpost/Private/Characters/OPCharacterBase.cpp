@@ -50,10 +50,10 @@ void AOPCharacterBase::CharacterDeath()
 	//Detach the character from their controller.
 	DetachFromControllerPendingDestroy();
 
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.IsDead"));
+	bIsCharacterDead = true;
 }
 
-const TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
 {
 	//LOGIC FOR PERFORMING A SPHERE TRACE GOES HERE
 	

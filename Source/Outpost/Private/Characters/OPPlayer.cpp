@@ -7,7 +7,6 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Items/OPWeapon.h"
 #include "Interfaces/OPInteractInterface.h"
 
 // Sets default values
@@ -65,7 +64,7 @@ void AOPPlayer::BeginPlay()
 		StartingWeapon->WeaponMesh->SetCastShadow(false);
 		WeaponArray.Emplace(StartingWeapon);
 		CurrentWeapon = StartingWeapon;
-		CurrentWeaponType = CurrentWeapon->WeaponType;
+		CurrentWeaponType = CurrentWeapon->Stats.WeaponType;
 	}
 	else
 	{
@@ -196,22 +195,22 @@ void AOPPlayer::GamepadLook(const FInputActionValue& Value)
 void AOPPlayer::StartJump()
 {
 	//If the player is currently crouching, then jumping will cause them to stop.
-	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
+	if (!bIsPlayerCrouching)
 	{
-		StopCrouch();
+		Jump();
 	}
 	else
 	{
-		Jump();
+		StopCrouch();
 	}
 }
 
 void AOPPlayer::ToggleZoom()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
+	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+		bIsPlayerZoomedIn = true;
 
 		//If the player is sprinting, then zooming in will cause them to stop.
 		StopSprint();
@@ -219,16 +218,16 @@ void AOPPlayer::ToggleZoom()
 	else
 	{
 		ZoomTimeline->Reverse();
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+		bIsPlayerZoomedIn = false;
 	}
 }
 
 void AOPPlayer::StartZoom()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
+	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+		bIsPlayerZoomedIn = true;
 
 		//If the player is sprinting, then zooming in will cause them to stop.
 		StopSprint();
@@ -237,10 +236,10 @@ void AOPPlayer::StartZoom()
 
 void AOPPlayer::StopZoom()
 {
-	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn")))
+	if (bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Reverse();
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsZoomedIn"));
+		bIsPlayerZoomedIn = false;
 	}
 }
 
@@ -262,10 +261,10 @@ void AOPPlayer::UpdateZoomCurveKeys()
 
 void AOPPlayer::ToggleCrouch()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
+	if (!bIsPlayerCrouching)
 	{
 		Crouch();
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
+		bIsPlayerCrouching = true;
 
 		//If the player is sprinting, then crouching will cause them to stop.
 		StopSprint();
@@ -273,7 +272,7 @@ void AOPPlayer::ToggleCrouch()
 	else
 	{
 		UnCrouch();
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
+		bIsPlayerCrouching = false;
 	}
 
 	//Update the movement status in the player's HUD.
@@ -282,10 +281,10 @@ void AOPPlayer::ToggleCrouch()
 
 void AOPPlayer::StartCrouch()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
+	if (!bIsPlayerCrouching)
 	{
 		Crouch();
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
+		bIsPlayerCrouching = true;
 
 		//If the player is sprinting, then crouching will cause them to stop.
 		StopSprint();
@@ -297,10 +296,10 @@ void AOPPlayer::StartCrouch()
 
 void AOPPlayer::StopCrouch()
 {
-	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching")))
+	if (bIsPlayerCrouching)
 	{
 		UnCrouch();
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsCrouching"));
+		bIsPlayerCrouching = false;
 	}
 
 	//Update the movement status in the player's HUD.
@@ -309,10 +308,10 @@ void AOPPlayer::StopCrouch()
 
 void AOPPlayer::ToggleSprint()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
+	if (!bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
+		bIsPlayerSprinting = true;
 
 		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
 		StopZoom();
@@ -321,7 +320,7 @@ void AOPPlayer::ToggleSprint()
 	else
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
+		bIsPlayerSprinting = false;
 	}
 
 	//Update the movement status in the player's HUD.
@@ -330,10 +329,10 @@ void AOPPlayer::ToggleSprint()
 
 void AOPPlayer::StartSprint()
 {
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
+	if (!bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
+		bIsPlayerSprinting = true;
 
 		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
 		StopZoom();
@@ -346,10 +345,10 @@ void AOPPlayer::StartSprint()
 
 void AOPPlayer::StopSprint()
 {
-	if (CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting")))
+	if (bIsPlayerSprinting)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.IsSprinting"));
+		bIsPlayerSprinting = false;
 	}
 
 	//Update the movement status in the player's HUD.
@@ -358,12 +357,11 @@ void AOPPlayer::StopSprint()
 
 void AOPPlayer::StartFire()
 {
-	if (!IsValid(CurrentWeapon) || CurrentWeapon->WeaponType == EWeaponType::NONE) return;
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"))) return;
-	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.FiringCooldownActive"))) return;
-	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.AnimationCooldownActive"))) return;
+	if (!bCanPlayerFire) return;
+	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
+	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
 
-	if (CurrentWeapon->CurrentMagazine <= 0)
+	if (CurrentWeapon->Stats.CurrentMagazine <= 0)
 	{
 		//PLAY DRY-FIRE MONTAGE HERE
 
@@ -373,9 +371,9 @@ void AOPPlayer::StartFire()
 	FireWeapon();
 
 	//If the current weapon is automatic, then continue firing on a looping timer.
-	if (CurrentWeapon->WeaponTags.HasTagExact(FGameplayTag::RequestGameplayTag("Weapon.IsAutomatic")))
+	if (CurrentWeapon->Stats.bIsWeaponAutomatic)
 	{
-		GetWorldTimerManager().SetTimer(FireHandle, this, &AOPPlayer::FireWeapon, CurrentWeapon->FireRate, true);
+		GetWorldTimerManager().SetTimer(FireHandle, this, &AOPPlayer::FireWeapon, CurrentWeapon->Stats.FireRate, true);
 	}
 }
 
@@ -399,8 +397,8 @@ void AOPPlayer::StopFire()
 
 void AOPPlayer::StartReload()
 {
-	if (!IsValid(CurrentWeapon) || CurrentWeapon->WeaponType == EWeaponType::NONE) return;
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"))) return;
+	if (!bCanPlayerReload) return;
+	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
 
 	//If the player doesn't have any reserve ammo for their current weapon, then don't bother trying to reload.
 	switch (CurrentWeaponType)
@@ -425,9 +423,9 @@ void AOPPlayer::StartReload()
 	StopZoom();
 
 	//The player is temporarily prevented from firing, reloading, or switching weapons.
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+	bCanPlayerFire = false;
+	bCanPlayerReload = false;
+	bCanPlayerSwitch = false;
 
 	EndReload(); //PLACEHOLDER
 
@@ -440,9 +438,9 @@ void AOPPlayer::EndReload()
 	if (!IsValid(CurrentWeapon)) return;
 
 	//The player is once again allowed to fire, reload, and switch weapons.
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+	bCanPlayerFire = true;
+	bCanPlayerReload = true;
+	bCanPlayerSwitch = true;
 
 	//The current weapon's category determines which type of reserve ammo will be used.
 	switch (CurrentWeaponType)
@@ -469,27 +467,26 @@ void AOPPlayer::EndReload()
 
 void AOPPlayer::TakeAmmoFromReserve(int32& ReserveAmmo)
 {
-	int32 AmmoUsed = CurrentWeapon->MaxMagazine - CurrentWeapon->CurrentMagazine;
+	int32 AmmoUsed = CurrentWeapon->Stats.MaxMagazine - CurrentWeapon->Stats.CurrentMagazine;
 
 	//If the player can perform a full reload, then it will be done...
 	if (ReserveAmmo - AmmoUsed >= 0)
 	{
-		CurrentWeapon->CurrentMagazine = CurrentWeapon->MaxMagazine;
+		CurrentWeapon->Stats.CurrentMagazine = CurrentWeapon->Stats.MaxMagazine;
 		ReserveAmmo -= AmmoUsed;
 	}
 	//...Otherwise, whatever reserve ammo's left will go into the magazine.
 	else
 	{
-		CurrentWeapon->CurrentMagazine += ReserveAmmo;
+		CurrentWeapon->Stats.CurrentMagazine += ReserveAmmo;
 		ReserveAmmo = 0;
 	}
 }
 
 void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 {
-	//The player can't switch weapons if they only have one.
+	if (!bCanPlayerSwitch) return;
 	if (!IsValid(CurrentWeapon) && WeaponArray.Num() < 2) return;
-	if (!CharacterTags.HasTagExact(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"))) return;
 
 	StopFire();
 	StopZoom();
@@ -554,9 +551,9 @@ void AOPPlayer::StartSwitch(AOPWeapon* NewWeapon)
 	if (!IsValid(NewWeapon)) return;
 
 	//The player is temporarily prevented from firing, reloading, or switching weapons.
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
-	CharacterTags.RemoveTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+	bCanPlayerFire = false;
+	bCanPlayerReload = false;
+	bCanPlayerSwitch = false;
 
 	//PLAY UNEQUIP MONTAGE FOR CURRENT WEAPON HERE
 
@@ -600,14 +597,8 @@ void AOPPlayer::HideAllUnequippedWeapons(AOPWeapon* NewWeapon)
 			Index->SetActorHiddenInGame(false);
 
 			CurrentWeapon = Index;
-			CurrentWeaponType = Index->WeaponType;
+			CurrentWeaponType = Index->Stats.WeaponType;
 		}
-	}
-
-	//FOR TESTING ONLY
-	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
-	{
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("Index %u: %s"), WeaponArray.Find(Index), *(Index->WeaponName.ToString()))); //FOR TESTING ONLY
 	}
 
 	//Update the weapon info in the player's HUD.
@@ -617,9 +608,9 @@ void AOPPlayer::HideAllUnequippedWeapons(AOPWeapon* NewWeapon)
 void AOPPlayer::AddPlayerTagsAfterWeaponSwitch()
 {
 	//The player is once again allowed to fire, reload, and switch weapons.
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanFire"));
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanReload"));
-	CharacterTags.AddTag(FGameplayTag::RequestGameplayTag("Character.Player.CanSwitch"));
+	bCanPlayerFire = true;
+	bCanPlayerReload = true;
+	bCanPlayerSwitch = true;
 
 	GetWorldTimerManager().ClearTimer(SwitchHandle);
 }
@@ -799,10 +790,10 @@ void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 {
 	if (!IsValid(NewWeapon)) return;
 
-	//The player cannot pick up more than one of the same weapon.
+	//The player cannot pick up two of the same weapon.
 	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
 	{
-		if (Index->WeaponName.EqualTo(NewWeapon->WeaponName)) return;
+		if (Index->Stats.WeaponName.EqualTo(NewWeapon->Stats.WeaponName)) return;
 	}
 
 	FAttachmentTransformRules StartingRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
@@ -818,7 +809,7 @@ void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 	WeaponArray.Emplace(NewWeapon);
 
 	//Sort the weapon array by category, in ascending order.
-	WeaponArray.Sort([](const AOPWeapon& a, const AOPWeapon& b) {return a.WeaponType < b.WeaponType;});
+	WeaponArray.Sort([](const AOPWeapon& a, const AOPWeapon& b) {return a.Stats.WeaponType < b.Stats.WeaponType;});
 
 	//If this is the first weapon that the player has picked up, then it will be automatically equipped.
 	if (WeaponArray.Num() <= 2)
