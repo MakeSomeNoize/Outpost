@@ -2,8 +2,6 @@
 
 ---Study UI Material Lab example project, and migrate desired UI assets out of it
 
----Take a look at character meshes on Mixamo, and decide if any of them will be used for the project
-
 ---Create OnTakePointDamage() callback functions in the player and enemy classes (once enemy class is created)
 
 ---Add "muzzle" sockets to each of the weapon meshes
