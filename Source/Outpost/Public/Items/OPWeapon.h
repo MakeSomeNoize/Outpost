@@ -34,7 +34,7 @@ public:
 	/* Actor and scene components */
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
-		TObjectPtr<UStaticMeshComponent> WeaponMesh;
+		TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
 	/* Weapon stats */
 
@@ -48,6 +48,32 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "OPWeapon|Cooldowns")
 		bool bAnimationCooldownActive;
+
+	/* Animation */
+
+	//The socket that this weapon will attach to, when picked up by a character.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation")
+		FName AttachToSocket = FName("FPSPistol");
+
+	//The montage that will play on a CHARACTER, when they fire this weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Firing")
+		TObjectPtr<UAnimMontage> CharacterFireMontage;
+
+	//The montage that will play on this WEAPON, when it shoots.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Firing")
+		TObjectPtr<UAnimMontage> WeaponShootMontage;
+
+	//The montage that will play on a CHARACTER, when they reload this weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages")
+		TObjectPtr<UAnimMontage> CharacterReloadMontage;
+
+	//The montage that will play on a CHARACTER, when they equip this weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Switching")
+		TObjectPtr<UAnimMontage> CharacterEquipMontage;
+
+	//The montage that will play on a CHARACTER, when they unequip this weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Switching")
+		TObjectPtr<UAnimMontage> CharacterUnequipMontage;
 	
 	void Shoot();
 

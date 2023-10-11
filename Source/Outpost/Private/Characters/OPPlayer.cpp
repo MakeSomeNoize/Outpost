@@ -59,7 +59,7 @@ void AOPPlayer::BeginPlay()
 		...Finally, it is added to the player's weapon array, and set as their current weapon.
 		*/
 		StartingWeapon->SetOwner(this);
-		StartingWeapon->AttachToComponent(GetMesh(), StartingRules, TEXT("FPS_Weapon_L"));
+		StartingWeapon->AttachToComponent(GetMesh(), StartingRules, StartingWeapon->AttachToSocket);
 		StartingWeapon->WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 		StartingWeapon->WeaponMesh->SetCastShadow(false);
 		WeaponArray.Emplace(StartingWeapon);
@@ -82,6 +82,7 @@ void AOPPlayer::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	InteractLineTrace();
+	
 }
 
 // Called to bind functionality to input
@@ -381,7 +382,7 @@ void AOPPlayer::FireWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;	
 
-	//PLAY THE CURRENT WEAPON'S FIRING MONTAGE HERE
+	if (IsValid(CurrentWeapon->CharacterFireMontage)) PlayAnimMontage(CurrentWeapon->CharacterFireMontage);
 	
 	CurrentWeapon->Shoot();
 
@@ -486,7 +487,7 @@ void AOPPlayer::TakeAmmoFromReserve(int32& ReserveAmmo)
 void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 {
 	if (!bCanPlayerSwitch) return;
-	if (!IsValid(CurrentWeapon) && WeaponArray.Num() < 2) return;
+	if (!IsValid(CurrentWeapon) || WeaponArray.Num() < 2) return;
 
 	StopFire();
 	StopZoom();
@@ -786,6 +787,24 @@ void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
 	}
 }
 
+void AOPPlayer::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+{
+	//The player should never be hit by their own melee attack.
+	TArray<TObjectPtr<AActor>> ActorsToIgnore;
+	ActorsToIgnore.Emplace(this);
+
+	if (IsValid(WorldSubsystem) && WorldSubsystem->bMeleeDebugLinesEnabled)
+	{
+		UKismetSystemLibrary::SphereTraceMulti(this, MeleeStart, MeleeEnd, Radius, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, MeleeHitResults, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
+	}
+	else
+	{
+		UKismetSystemLibrary::SphereTraceMulti(this, MeleeStart, MeleeEnd, Radius, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::None, MeleeHitResults, true, FLinearColor::Red, FLinearColor::Green, 0.f);
+	}
+
+	ProcessMeleeHitOnTargets_Implementation();
+}
+
 void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 {
 	if (!IsValid(NewWeapon)) return;
@@ -804,7 +823,7 @@ void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 	...And finally, it is added to the player's weapon array.
 	*/
 	NewWeapon->SetOwner(this);
-	NewWeapon->AttachToComponent(GetMesh(), StartingRules, TEXT("FPS_Weapon_L"));
+	NewWeapon->AttachToComponent(GetMesh(), StartingRules, NewWeapon->AttachToSocket);
 	NewWeapon->WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponArray.Emplace(NewWeapon);
 

@@ -16,7 +16,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponDelegate);
 class UInputAction;
 class UInputMappingContext;
 class UCameraComponent;
-class AOPWeapon;
 
 /**
  * 
@@ -47,7 +46,8 @@ protected:
 	virtual void CharacterDeath() override;
 
 	/* Overridden from OPCharacterInterface */
-
+	
+	virtual void MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius) override;
 	virtual void PickUpWeapon_Implementation(AOPWeapon* NewWeapon) override;
 
 	/* Actor and scene components */
@@ -138,19 +138,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "OPPlayer|Aiming")
 		void UpdateZoomCurveKeys();
 
-	/* Player inventory */
-
-	//All of the weapons that the player is currently carrying.
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
-		TArray<TObjectPtr<AOPWeapon>> WeaponArray;
-
-	//The weapon that the player currently has equipped.
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
-		TObjectPtr<AOPWeapon> CurrentWeapon;
-
-	//The category that the player's currently-equipped weapon belongs to.
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
-		EWeaponType CurrentWeaponType;
+	/* Inventory */
 
 	//The class of the weapon that the player will spawn with, if applicable.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Inventory|Weapons")
@@ -181,13 +169,6 @@ protected:
 	//The maximum distance at which the player can interact with applicable objects.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
 		float InteractRadius = 100.f;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction")
-		bool bCanPlayerInteract;
-
-	//The amount of damage that the player's melee attacks inflict.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Interaction|Melee")
-		int32 MeleeDamage = 1;
 
 	/* Look sensitivity */
 
@@ -228,6 +209,9 @@ protected:
 		float SprintSpeed = 900.f;
 
 	/* Booleans */
+
+	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
+		bool bCanPlayerInteract;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
 		bool bIsPlayerCrouching;

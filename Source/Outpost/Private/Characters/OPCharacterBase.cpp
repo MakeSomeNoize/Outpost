@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/OPCharacterBase.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AOPCharacterBase::AOPCharacterBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -53,10 +53,21 @@ void AOPCharacterBase::CharacterDeath()
 	bIsCharacterDead = true;
 }
 
-TArray<FHitResult> AOPCharacterBase::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)
+void AOPCharacterBase::ProcessMeleeHitOnTargets_Implementation()
 {
-	//LOGIC FOR PERFORMING A SPHERE TRACE GOES HERE
-	
-	//Using an empty array as a placeholder for now.
-	return TArray<FHitResult>();
+	for (FHitResult Index : MeleeHitResults)
+	{
+		if (IsValid(Index.GetActor()))
+		{
+			//Make sure that none of the actors hit have already been damaged by this melee attack.
+			if (!ActorsDamaged.Contains(Index.GetActor()))
+			{
+				UGameplayStatics::ApplyDamage(Index.GetActor(), MeleeDamage, GetController(), this, MeleeDamageType);
+				ActorsDamaged.Emplace(Index.GetActor());
+			}
+		}
+	}
+
+	//Clear out the array of actors damaged once we're done.
+	ActorsDamaged.Empty();
 }

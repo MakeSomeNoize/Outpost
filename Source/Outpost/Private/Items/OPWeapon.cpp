@@ -14,9 +14,11 @@ AOPWeapon::AOPWeapon()
 	WeaponRoot = CreateDefaultSubobject<USceneComponent>("Weapon Root");
 	RootComponent = WeaponRoot;
 
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>("Weapon Mesh");
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon Mesh");
 	WeaponMesh->SetupAttachment(WeaponRoot);
 	WeaponMesh->SetGenerateOverlapEvents(false);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	WeaponMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	
 }
@@ -70,14 +72,14 @@ void AOPWeapon::Shoot()
 	//If the weapon is burst-fire, then its shots will fire in sequence...
 	if (Stats.bIsWeaponBurst && BurstCount < Stats.ShotAmount)
 	{
-		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+		if (IsValid(WeaponShootMontage)) WeaponMesh->PlayAnimation(WeaponShootMontage, false);
 
 		//BURST-FIRE LOGIC GOES HERE
 	}
 	//...Otherwise, only one shot will be fired.
 	else
 	{
-		//LOGIC FOR PLAYING FIRING EFFECT AND FIRING SOUND GO HERE
+		if (IsValid(WeaponShootMontage)) WeaponMesh->PlayAnimation(WeaponShootMontage, false);
 
 		WeaponLineTrace();
 	}

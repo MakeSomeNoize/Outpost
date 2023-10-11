@@ -21,10 +21,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	/* Overridden from OPCharacterInterface */
+	
+	virtual void ProcessMeleeHitOnTargets_Implementation() override;
 
-	virtual TArray<FHitResult> MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius) override;
-
-	/* Character health */
+	/* Health */
 
 	//Returns the character's current health.
 	UFUNCTION(BlueprintCallable, BlueprintGetter, Category = "OPCharacterBase|Health")
@@ -52,7 +52,21 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	/* Character health */
+	/* Inventory */
+
+	//All of the weapons that the character is carrying.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPCharacterBase|Inventory|Weapons")
+		TArray<TObjectPtr<AOPWeapon>> WeaponArray;
+
+	//The weapon that the character currently has equipped.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPCharacterBase|Inventory|Weapons")
+		TObjectPtr<AOPWeapon> CurrentWeapon;
+
+	//The category that the character's currently-equipped weapon belongs to.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OPCharacterBase|Inventory|Weapons")
+		EWeaponType CurrentWeaponType;
+
+	/* Health */
 
 	//The amount of health that the character currently has.
 	UPROPERTY(VisibleInstanceOnly, BlueprintGetter = GetCurrentHealth, BlueprintSetter = SetCurrentHealth, Category = "OPCharacterBase|Health")
@@ -67,9 +81,26 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "OPCharacterBase|Booleans")
 		bool bIsCharacterDead;
 
-	//An array of all the actors that were hit by the character's last melee attack.
-	UPROPERTY(BlueprintReadWrite, Category = "OPCharacterBase")
-		TArray<TObjectPtr<AActor>> ActorsHit;
+	/* Melee */
+
+	//The amount of damage that the player's melee attacks inflict.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPCharacterBase|Melee")
+		int32 MeleeDamage = 1;
+
+	//An array of all the hit results gathered by the character's last melee attack.
+	UPROPERTY(BlueprintReadOnly, Category = "OPCharacterBase|Melee")
+		TArray<FHitResult> MeleeHitResults;
+
+	//The type of damage inflicted by this character's melee attacks.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPCharacterBase|Melee")
+		TSubclassOf<UDamageType> MeleeDamageType;
+
+	/*
+	An array of all the actors damaged by the character's last melee attack.
+	Actors should never be damaged more than once, by the same melee attack.
+	*/
+	UPROPERTY(BlueprintReadWrite, Category = "OPCharacterBase|Melee")
+		TArray<TObjectPtr<AActor>> ActorsDamaged;
 	
 	UPROPERTY()
 		TObjectPtr<UOPWorldSubsystem> WorldSubsystem;

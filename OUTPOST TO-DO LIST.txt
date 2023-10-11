@@ -19,7 +19,7 @@
 	---In the weapon's firing montage, copy the firing animation multiple times; once for each shot in the burst
 	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0 (do this inside an anim notify)
 
----Create UDamageType BP classes for each weapon
+---Create UDamageType BP classes for each weapon, and for melee attacks
 
 ---Create OPSaveGame class in C++
 

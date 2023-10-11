@@ -34,6 +34,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
 		bool bWeaponDebugLinesEnabled;
 
+	//Determines whether debug lines for melee traces are visible, or not. 
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+		bool bMeleeDebugLinesEnabled;
+
 	/*
 	Determines if the player's weapons have infinite ammo, or not.
 	This version prevents the weapons' magazines from going empty.
@@ -47,6 +51,12 @@ public:
 	*/
 	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Infinite Ammo")
 		bool bInfiniteAmmoWithReloadEnabled;
+
+	/* Enemies */
+
+	//An array of references to all enemies that are currently alive.
+	UPROPERTY(BlueprintReadOnly, Category = "OPWorldSubsystem|Enemies")
+		TArray<TObjectPtr<AActor>> EnemyArray;
 
 	/* Delegates */
 
