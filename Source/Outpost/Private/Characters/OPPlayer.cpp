@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/OPInteractInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AOPPlayer::AOPPlayer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -119,6 +120,8 @@ void AOPPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		if (IsValid(ReloadWeaponAction)) PlayerEnhancedInputComponent->BindAction(ReloadWeaponAction, ETriggerEvent::Triggered, this, &AOPPlayer::StartReload);
 
 		if (IsValid(CycleWeaponsAction)) PlayerEnhancedInputComponent->BindAction(CycleWeaponsAction, ETriggerEvent::Triggered, this, &AOPPlayer::CycleWeapons);
+
+		if (IsValid(ChangeFireModeAction)) PlayerEnhancedInputComponent->BindAction(ChangeFireModeAction, ETriggerEvent::Triggered, this, &AOPPlayer::ChangeFireMode);
 		
 		if (IsValid(InteractAction)) PlayerEnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AOPPlayer::Interact);
 
@@ -362,9 +365,10 @@ void AOPPlayer::StartFire()
 	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
 	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
 
+	//Play a dry-fire sound, if the current weapon is empty.
 	if (CurrentWeapon->Stats.CurrentMagazine <= 0)
 	{
-		//PLAY DRY-FIRE MONTAGE HERE
+		if (IsValid(CurrentWeapon->DryFireSound)) UGameplayStatics::PlaySoundAtLocation(this, CurrentWeapon->DryFireSound, GetActorLocation(), GetActorRotation());
 
 		return;
 	}
@@ -372,7 +376,7 @@ void AOPPlayer::StartFire()
 	FireWeapon();
 
 	//If the current weapon is automatic, then continue firing on a looping timer.
-	if (CurrentWeapon->Stats.bIsWeaponAutomatic)
+	if (CurrentWeapon->Stats.CurrentFireMode == EFireMode::FullAuto)
 	{
 		GetWorldTimerManager().SetTimer(FireHandle, this, &AOPPlayer::FireWeapon, CurrentWeapon->Stats.FireRate, true);
 	}
@@ -392,8 +396,8 @@ void AOPPlayer::FireWeapon()
 
 void AOPPlayer::StopFire()
 {
+	//Clear the looping timer for automatic weapons.
 	GetWorldTimerManager().ClearTimer(FireHandle);
-	
 }
 
 void AOPPlayer::StartReload()
@@ -428,10 +432,16 @@ void AOPPlayer::StartReload()
 	bCanPlayerReload = false;
 	bCanPlayerSwitch = false;
 
-	EndReload(); //PLACEHOLDER
-
-	//PLAYING OF RELOAD MONTAGE GOES HERE
-	//STARTING OF TIMER FOR ENDRELOAD() GOES HERE
+	//The weapon's reload animation plays, and a timer is set for reloading to end.
+	if (IsValid(CurrentWeapon->CharacterReloadMontage))
+	{
+		PlayAnimMontage(CurrentWeapon->CharacterReloadMontage);
+		GetWorldTimerManager().SetTimer(ReloadHandle, this, &AOPPlayer::EndReload, CurrentWeapon->CharacterReloadMontage->GetPlayLength(), false);
+	}
+	else
+	{
+		EndReload();
+	}
 }
 
 void AOPPlayer::EndReload()
@@ -556,14 +566,22 @@ void AOPPlayer::StartSwitch(AOPWeapon* NewWeapon)
 	bCanPlayerReload = false;
 	bCanPlayerSwitch = false;
 
-	//PLAY UNEQUIP MONTAGE FOR CURRENT WEAPON HERE
+	//The weapon's unequip animation plays, and a timer is set for switching to end.
+	if (IsValid(CurrentWeapon->CharacterUnequipMontage))
+	{
+		PlayAnimMontage(CurrentWeapon->CharacterUnequipMontage);
 
-	//An FTimerDelegate is needed, to call a function with parameters on a timer.
-	FTimerDelegate SwitchDelegate;
-	SwitchDelegate.BindUFunction(this, TEXT("EndSwitch"), NewWeapon);
-
-	//Set a timer for when weapon switching will end.
-	GetWorldTimerManager().SetTimer(SwitchHandle, SwitchDelegate, 0.1f, false); //INRATE IS A PLACEHOLDER VALUE
+		//An FTimerDelegate is needed, to call a function with parameters on a timer.
+		FTimerDelegate SwitchDelegate;
+		SwitchDelegate.BindUFunction(this, TEXT("EndSwitch"), NewWeapon);
+		
+		GetWorldTimerManager().SetTimer(SwitchHandle, SwitchDelegate, CurrentWeapon->CharacterUnequipMontage->GetPlayLength(), false);
+	}
+	else
+	{
+		EndSwitch(NewWeapon);
+	}
+	
 }
 
 void AOPPlayer::EndSwitch(AOPWeapon* NewWeapon)
@@ -572,10 +590,17 @@ void AOPPlayer::EndSwitch(AOPWeapon* NewWeapon)
 
 	HideAllUnequippedWeapons(NewWeapon);
 
-	//PLAY EQUIP MONTAGE FOR NEW WEAPON HERE
-
-	//Set a timer for when player tags will be re-added.
-	GetWorldTimerManager().SetTimer(SwitchHandle, this, &AOPPlayer::AddPlayerTagsAfterWeaponSwitch, 0.1f, false); //INRATE IS A PLACEHOLDER VALUE
+	//The new weapon's equip animation plays, and a timer is set for the player to capable of firing, reloading, and switching weapons again.
+	if (IsValid(CurrentWeapon->CharacterEquipMontage))
+	{
+		PlayAnimMontage(CurrentWeapon->CharacterEquipMontage);
+		
+		GetWorldTimerManager().SetTimer(SwitchHandle, this, &AOPPlayer::AddPlayerTagsAfterWeaponSwitch, CurrentWeapon->CharacterEquipMontage->GetPlayLength(), false);
+	}
+	else
+	{
+		AddPlayerTagsAfterWeaponSwitch();
+	}
 
 	//Update the weapon info in the player's HUD.
 	OnWeaponUpdate.Broadcast();
@@ -613,7 +638,48 @@ void AOPPlayer::AddPlayerTagsAfterWeaponSwitch()
 	bCanPlayerReload = true;
 	bCanPlayerSwitch = true;
 
+	//Clear the time for weapon switching.
 	GetWorldTimerManager().ClearTimer(SwitchHandle);
+}
+
+void AOPPlayer::ChangeFireMode()
+{
+	if (!bCanPlayerFire) return;
+	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
+	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
+
+	//The current weapon's fire mode will change, based on which ones are available.
+	switch (CurrentWeapon->Stats.CurrentFireMode)
+	{
+		case EFireMode::SemiAuto:
+			if (CurrentWeapon->Stats.bDoesWeaponSupportBurst)
+			{
+				CurrentWeapon->Stats.CurrentFireMode = EFireMode::Burst;
+			}
+			else if (!CurrentWeapon->Stats.bDoesWeaponSupportBurst && CurrentWeapon->Stats.bDoesWeaponSupportAuto)
+			{
+				CurrentWeapon->Stats.CurrentFireMode = EFireMode::FullAuto;
+			}
+			break;
+		case EFireMode::Burst:
+			if (CurrentWeapon->Stats.bDoesWeaponSupportAuto)
+			{
+				CurrentWeapon->Stats.CurrentFireMode = EFireMode::FullAuto;
+			}
+			else
+			{
+				CurrentWeapon->Stats.CurrentFireMode = EFireMode::SemiAuto;
+			}
+			break;
+		case EFireMode::FullAuto:
+			CurrentWeapon->Stats.CurrentFireMode = EFireMode::SemiAuto;
+			break;
+		default:
+			break;
+	}
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
 }
 
 void AOPPlayer::Interact()

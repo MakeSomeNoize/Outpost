@@ -17,6 +17,15 @@ enum class EWeaponType : uint8
 	Sniper	UMETA(DisplayName = "Sniper")
 };
 
+//Determines what fire mode a weapon is currently using.
+UENUM(BlueprintType)
+enum class EFireMode : uint8
+{
+	SemiAuto	UMETA(DisplayName = "Semi"),
+	Burst	UMETA(DisplayName = "Burst"),
+	FullAuto	UMETA(DisplayName = "Auto")
+};
+
 //Determines what category an interactable object belongs to.
 UENUM(BlueprintType)
 enum class EInteractType : uint8

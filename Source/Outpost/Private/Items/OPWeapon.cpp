@@ -36,15 +36,12 @@ void AOPWeapon::BeginPlay()
 	//Shotguns are not allowed to be automatic or burst-fire.
 	if (Stats.WeaponType == EWeaponType::Shotgun)
 	{
-		Stats.bIsWeaponBurst = false;
-		Stats.bIsWeaponAutomatic = false;
+		Stats.DefaultFireMode = EFireMode::SemiAuto;
+		Stats.bDoesWeaponSupportAuto = false;
+		Stats.bDoesWeaponSupportBurst = false;
 	}
 
-	//Automatic weapons are not allowed to ALSO be burst-fire.
-	if (Stats.bIsWeaponAutomatic) Stats.bIsWeaponBurst = false;
-
-	//Burst-fire weapons are not allowed to ALSO be automatic.
-	if (Stats.bIsWeaponBurst) Stats.bIsWeaponAutomatic = false;
+	Stats.CurrentFireMode = Stats.DefaultFireMode;
 	
 }
 
@@ -69,8 +66,8 @@ void AOPWeapon::Shoot()
 		}
 	}
 	
-	//If the weapon is burst-fire, then its shots will fire in sequence...
-	if (Stats.bIsWeaponBurst && BurstCount < Stats.ShotAmount)
+	//If the weapon is burst-fire, then multiple shots will fire in sequence...
+	if (Stats.CurrentFireMode == EFireMode::Burst && BurstCount < Stats.ShotAmount)
 	{
 		if (IsValid(WeaponShootMontage)) WeaponMesh->PlayAnimation(WeaponShootMontage, false);
 
@@ -85,7 +82,7 @@ void AOPWeapon::Shoot()
 	}
 
 	//If the weapon is semi-automatic, then start a cooldown and set a timer for when the cooldown will end.
-	if (!Stats.bIsWeaponAutomatic)
+	if (Stats.CurrentFireMode == EFireMode::SemiAuto)
 	{
 		bFiringCooldownActive = true;
 
@@ -165,12 +162,12 @@ void AOPWeapon::CheckInfiniteAmmoStatus()
 
 void AOPWeapon::StartFocus_Implementation()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	
 }
 
 void AOPWeapon::EndFocus_Implementation()
 {
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString::Printf(TEXT("%s called"), *(FString(__FUNCTION__)))); //FOR TESTING ONLY
+	
 }
 
 void AOPWeapon::OnInteract_Implementation(AActor* CallingPlayer)

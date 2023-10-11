@@ -74,6 +74,12 @@ public:
 	//The montage that will play on a CHARACTER, when they unequip this weapon.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Switching")
 		TObjectPtr<UAnimMontage> CharacterUnequipMontage;
+
+	/* Sounds */
+
+	//The sound that plays when the character tries to fire an empty weapon.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Sounds")
+		TObjectPtr<USoundWave> DryFireSound;
 	
 	void Shoot();
 

@@ -36,21 +36,29 @@ struct FWeaponStats
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		float MaxRange = 10000.f;
 
+	//This weapon's current fire mode.
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
+		EFireMode CurrentFireMode;
+
+	//The fire mode that this weapon is in, when it first spawns.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		EFireMode DefaultFireMode;
+
 	//The frequency at which this weapon fires.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		float FireRate = 1.f;
 
-	//Determines whether this weapon is automatic, or not.
+	//Determines whether this weapon is capable of automatic fire, or not.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		bool bIsWeaponAutomatic;
+		bool bDoesWeaponSupportAuto;
 
 	//The frequency at which this weapon's bursts fire, if applicable.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		float BurstFireRate = 1.f;
 
-	//Determines whether this weapon is burst-fire, or not.
+	//Determines whether this weapon is capable of burst fire, or not.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		bool bIsWeaponBurst;
+		bool bDoesWeaponSupportBurst;
 
 	//The number of rounds that are currently in this weapon's magazine.
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)

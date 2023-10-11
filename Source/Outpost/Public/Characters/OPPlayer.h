@@ -101,6 +101,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Weapons")
 		TObjectPtr<UInputAction> CycleWeaponsAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Weapons")
+		TObjectPtr<UInputAction> ChangeFireModeAction;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Interaction")
 		TObjectPtr<UInputAction> InteractAction;
 
@@ -289,6 +292,8 @@ protected:
 	void StartSwitch(AOPWeapon* NewWeapon);
 	void HideAllUnequippedWeapons(AOPWeapon* NewWeapon);
 	void AddPlayerTagsAfterWeaponSwitch();
+
+	void ChangeFireMode();
 	
 	void Interact();
 	void InteractLineTrace();
