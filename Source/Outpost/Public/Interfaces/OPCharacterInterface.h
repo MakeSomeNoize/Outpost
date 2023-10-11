@@ -44,6 +44,22 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Inventory")
 		void PickUpWeapon(AOPWeapon* NewWeapon);
 
+	/*
+	Picks up reserve ammo, and adds it to the player's inventory.
+	@param	AmmoType	The category of weapon that the reserve ammo belongs to.
+	@param	Amount	The amount of reserve ammo that was picked up.
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Inventory")
+		void PickUpAmmo(EWeaponType AmmoType, int32 Amount);
+
+	/*
+	Returns "true" if the player has reached their limit for the specified type of reserve ammo, and "false" if they have not.
+	@param	TypeToCheck	The category of weapon, whose reserve ammo should be checked.
+	@return	Is the player unable to pick up any more reserve ammo?
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Inventory")
+		bool IsPlayerReserveAmmoMaxedOut(EWeaponType TypeToCheck);
+
 protected:
 	
 };

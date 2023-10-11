@@ -874,11 +874,20 @@ void AOPPlayer::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector Mele
 void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 {
 	if (!IsValid(NewWeapon)) return;
-
-	//The player cannot pick up two of the same weapon.
+	
 	for (TObjectPtr<AOPWeapon> Index : WeaponArray)
 	{
-		if (Index->Stats.WeaponName.EqualTo(NewWeapon->Stats.WeaponName)) return;
+		//If the player picks up more than one of the same weapon, then give them reserve ammo instead.
+		if (Index->Stats.WeaponName.EqualTo(NewWeapon->Stats.WeaponName))
+		{
+			if (!IsPlayerReserveAmmoMaxedOut_Implementation(Index->Stats.WeaponType))
+			{
+				PickUpAmmo_Implementation(Index->Stats.WeaponType, FMath::RandRange(Index->Stats.MaxMagazine, Index->Stats.MaxMagazine * 2));
+				NewWeapon->Destroy();
+			}
+
+			return;
+		}
 	}
 
 	FAttachmentTransformRules StartingRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false);
@@ -906,5 +915,59 @@ void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 		HideAllUnequippedWeapons(CurrentWeapon);
 	}
 
-	//LOGIC FOR BROADCASTING TO "PICK UP ITEM" DELEGATE GOES HERE
+	//Broadcast info about the item that was picked up, to the player's HUD.
+	OnItemPickup.Broadcast(true, false, false);
+}
+
+void AOPPlayer::PickUpAmmo_Implementation(EWeaponType AmmoType, int32 Amount)
+{
+	if (IsPlayerReserveAmmoMaxedOut_Implementation(AmmoType)) return;
+	
+	/*
+	The player receives more reserve ammo, based on the type that they picked up.
+	The amount they receive should never put them over their reserve ammo limit.
+	*/
+	switch (AmmoType)
+	{
+		case EWeaponType::Pistol:
+			PistolAmmo = FMath::Clamp(PistolAmmo + Amount, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Rifle:
+			RifleAmmo = FMath::Clamp(RifleAmmo + Amount, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Shotgun:
+			ShotgunAmmo = FMath::Clamp(ShotgunAmmo + Amount, 0, MaxReserveAmmo);
+			break;
+		case EWeaponType::Sniper:
+			SniperAmmo = FMath::Clamp(SniperAmmo + Amount, 0, MaxReserveAmmo);
+			break;
+		default:
+			break;
+	}
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
+
+	//Broadcast info about the item that was picked up, to the player's HUD.
+	OnItemPickup.Broadcast(false, true, false);
+}
+
+bool AOPPlayer::IsPlayerReserveAmmoMaxedOut_Implementation(EWeaponType TypeToCheck)
+{
+	//Checks if the player can no longer carry any of the reserve ammo in question.
+	switch (TypeToCheck)
+	{
+	case EWeaponType::Pistol:
+		return (PistolAmmo == MaxReserveAmmo);
+	case EWeaponType::Rifle:
+		return (RifleAmmo == MaxReserveAmmo);
+	case EWeaponType::Shotgun:
+		return (ShotgunAmmo == MaxReserveAmmo);
+	case EWeaponType::Sniper:
+		return (SniperAmmo == MaxReserveAmmo);
+	default:
+		break;
+	}
+
+	return false;
 }

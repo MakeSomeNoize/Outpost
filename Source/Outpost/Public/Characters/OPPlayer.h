@@ -11,6 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMovementDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractDelegate, FText, ObjectName, EInteractType, ObjectType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FItemPickupDelegate,  bool, bWeaponPickup, bool, bAmmoPickup, bool, bHealthPickup);
 
 //Forward declarations.
 class UInputAction;
@@ -49,6 +50,8 @@ protected:
 	
 	virtual void MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius) override;
 	virtual void PickUpWeapon_Implementation(AOPWeapon* NewWeapon) override;
+	virtual void PickUpAmmo_Implementation(EWeaponType AmmoType, int32 Amount) override;
+	virtual bool IsPlayerReserveAmmoMaxedOut_Implementation(EWeaponType TypeToCheck) override;
 
 	/* Actor and scene components */
 
@@ -244,6 +247,9 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
 		FWeaponDelegate OnWeaponUpdate;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPPlayer|Delegates")
+		FItemPickupDelegate OnItemPickup;
 
 	UPROPERTY()
 		TObjectPtr<AActor> FocusedActor;
