@@ -20,9 +20,6 @@ AOPPlayer::AOPPlayer(const FObjectInitializer& ObjectInitializer) : Super(Object
 	PlayerCamera->SetupAttachment(RootComponent);
 	PlayerCamera->bUsePawnControlRotation = true;
 
-	//Enables crouching for the player.
-	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
-
 	//The character mesh should be attached to the camera, for first-person games.
 	GetMesh()->SetupAttachment(PlayerCamera);
 
@@ -100,16 +97,40 @@ void AOPPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		if (IsValid(StrafeRightAction)) PlayerEnhancedInputComponent->BindAction(StrafeRightAction, ETriggerEvent::Triggered, this, &AOPPlayer::StrafeRight);
 		if (IsValid(GamepadMoveAction)) PlayerEnhancedInputComponent->BindAction(GamepadMoveAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadMove);
 
-		if (IsValid(JumpAction)) PlayerEnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AOPPlayer::StartJump);
+		if (IsValid(JumpAction)) PlayerEnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+
+		if (IsValid(MouseAndKeyboardToggleSprintAction)) PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardToggleSprintAction, ETriggerEvent::Triggered, this, &AOPPlayer::MouseAndKeyboardToggleSprint);
+		if (IsValid(GamepadToggleSprintAction)) PlayerEnhancedInputComponent->BindAction(GamepadToggleSprintAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadToggleSprint);
+
+		if (IsValid(MouseAndKeyboardHoldSprintAction))
+		{
+			PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardHoldSprintAction, ETriggerEvent::Started, this, &AOPPlayer::MouseAndKeyboardStartSprint);
+			PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardHoldSprintAction, ETriggerEvent::Completed, this, &AOPPlayer::MouseAndKeyboardStopSprint);
+		}
+
+		if (IsValid(GamepadHoldSprintAction))
+		{
+			PlayerEnhancedInputComponent->BindAction(GamepadHoldSprintAction, ETriggerEvent::Started, this, &AOPPlayer::GamepadStartSprint);
+			PlayerEnhancedInputComponent->BindAction(GamepadHoldSprintAction, ETriggerEvent::Completed, this, &AOPPlayer::GamepadStopSprint);
+		}
 
 		if (IsValid(MouseLookAction)) PlayerEnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AOPPlayer::MouseLook);
 		if (IsValid(GamepadLookAction)) PlayerEnhancedInputComponent->BindAction(GamepadLookAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadLook);
 
-		if (IsValid(ToggleZoomAction)) PlayerEnhancedInputComponent->BindAction(ToggleZoomAction, ETriggerEvent::Triggered, this, &AOPPlayer::ToggleZoom);
-		
-		if (IsValid(ToggleCrouchAction)) PlayerEnhancedInputComponent->BindAction(ToggleCrouchAction, ETriggerEvent::Triggered, this, &AOPPlayer::ToggleCrouch);
+		if (IsValid(MouseAndKeyboardToggleZoomAction)) PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardToggleZoomAction, ETriggerEvent::Triggered, this, &AOPPlayer::MouseAndKeyboardToggleZoom);
+		if (IsValid(GamepadToggleZoomAction)) PlayerEnhancedInputComponent->BindAction(GamepadToggleZoomAction, ETriggerEvent::Triggered, this, &AOPPlayer::GamepadToggleZoom);
 
-		if (IsValid(ToggleSprintAction)) PlayerEnhancedInputComponent->BindAction(ToggleSprintAction, ETriggerEvent::Triggered, this, &AOPPlayer::ToggleSprint);
+		if (IsValid(MouseAndKeyboardHoldZoomAction))
+		{
+			PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardHoldZoomAction, ETriggerEvent::Started, this, &AOPPlayer::MouseAndKeyboardStartZoom);
+			PlayerEnhancedInputComponent->BindAction(MouseAndKeyboardHoldZoomAction, ETriggerEvent::Completed, this, &AOPPlayer::MouseAndKeyboardStopZoom);
+		}
+
+		if (IsValid(GamepadHoldZoomAction))
+		{
+			PlayerEnhancedInputComponent->BindAction(GamepadHoldZoomAction, ETriggerEvent::Started, this, &AOPPlayer::GamepadStartZoom);
+			PlayerEnhancedInputComponent->BindAction(GamepadHoldZoomAction, ETriggerEvent::Completed, this, &AOPPlayer::GamepadStopZoom);
+		}
 
 		if (IsValid(FireWeaponAction))
 		{
@@ -143,7 +164,7 @@ void AOPPlayer::PawnClientRestart()
 			Subsystem->ClearAllMappings();
 
 			// Add each mapping context, along with their priority values. Higher values out-prioritize lower values.
-			if (IsValid(BaseContext)) Subsystem->AddMappingContext(BaseContext, 0);
+			if (IsValid(DefaultContext)) Subsystem->AddMappingContext(DefaultContext, 0);
 		}
 	}
 }
@@ -196,28 +217,143 @@ void AOPPlayer::GamepadLook(const FInputActionValue& Value)
 	}
 }
 
-void AOPPlayer::StartJump()
+void AOPPlayer::MouseAndKeyboardToggleSprint()
 {
-	//If the player is currently crouching, then jumping will cause them to stop.
-	if (!bIsPlayerCrouching)
+	//Make sure the input state is actually set to a "toggle".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardSprintState != EInputState::Toggle) return;
+
+	if (!bIsPlayerSprinting)
 	{
-		Jump();
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		bIsPlayerSprinting = true;
+
+		//If the player is zoomed in, then sprinting will cause them to stop.
+		UniversalStopZoom();
 	}
 	else
 	{
-		StopCrouch();
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		bIsPlayerSprinting = false;
 	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
 }
 
-void AOPPlayer::ToggleZoom()
+void AOPPlayer::GamepadToggleSprint()
 {
+	//Make sure the input state is actually set to a "toggle".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadSprintState != EInputState::Toggle) return;
+
+	if (!bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		bIsPlayerSprinting = true;
+
+		//If the player is zoomed in, then sprinting will cause them to stop.
+		UniversalStopZoom();
+	}
+	else
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		bIsPlayerSprinting = false;
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+void AOPPlayer::MouseAndKeyboardStartSprint()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardSprintState != EInputState::Hold) return;
+
+	if (!bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		bIsPlayerSprinting = true;
+
+		//If the player is zoomed in, then sprinting will cause them to stop.
+		UniversalStopZoom();
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+void AOPPlayer::MouseAndKeyboardStopSprint()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardSprintState != EInputState::Hold) return;
+
+	if (bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		bIsPlayerSprinting = false;
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+void AOPPlayer::GamepadStartSprint()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadSprintState != EInputState::Hold) return;
+
+	if (!bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		bIsPlayerSprinting = true;
+
+		//If the player is zoomed in, then sprinting will cause them to stop.
+		UniversalStopZoom();
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+void AOPPlayer::GamepadStopSprint()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadSprintState != EInputState::Hold) return;
+
+	if (bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		bIsPlayerSprinting = false;
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+//This function exists to cancel sprinting, when the player zooms in.
+void AOPPlayer::UniversalStopSprint()
+{
+	if (bIsPlayerSprinting)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
+		bIsPlayerSprinting = false;
+	}
+
+	//Update the movement status in the player's HUD.
+	OnMovementUpdate.Broadcast();
+}
+
+void AOPPlayer::MouseAndKeyboardToggleZoom()
+{
+	//Make sure the input state is actually set to a "toggle".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardZoomState != EInputState::Toggle) return;
+	
 	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
 		bIsPlayerZoomedIn = true;
 
 		//If the player is sprinting, then zooming in will cause them to stop.
-		StopSprint();
+		UniversalStopSprint();
 	}
 	else
 	{
@@ -226,19 +362,82 @@ void AOPPlayer::ToggleZoom()
 	}
 }
 
-void AOPPlayer::StartZoom()
+void AOPPlayer::GamepadToggleZoom()
 {
+	//Make sure the input state is actually set to a "toggle".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadZoomState != EInputState::Toggle) return;
+	
 	if (!bIsPlayerZoomedIn)
 	{
 		ZoomTimeline->Play();
 		bIsPlayerZoomedIn = true;
 
 		//If the player is sprinting, then zooming in will cause them to stop.
-		StopSprint();
+		UniversalStopSprint();
+	}
+	else
+	{
+		ZoomTimeline->Reverse();
+		bIsPlayerZoomedIn = false;
 	}
 }
 
-void AOPPlayer::StopZoom()
+void AOPPlayer::MouseAndKeyboardStartZoom()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardZoomState != EInputState::Hold) return;
+
+	if (!bIsPlayerZoomedIn)
+	{
+		ZoomTimeline->Play();
+		bIsPlayerZoomedIn = true;
+
+		//If the player is sprinting, then zooming in will cause them to stop.
+		UniversalStopSprint();
+	}
+}
+
+void AOPPlayer::MouseAndKeyboardStopZoom()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->MouseAndKeyboardZoomState != EInputState::Hold) return;
+
+	if (bIsPlayerZoomedIn)
+	{
+		ZoomTimeline->Reverse();
+		bIsPlayerZoomedIn = false;
+	}
+}
+
+void AOPPlayer::GamepadStartZoom()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadZoomState != EInputState::Hold) return;
+
+	if (!bIsPlayerZoomedIn)
+	{
+		ZoomTimeline->Play();
+		bIsPlayerZoomedIn = true;
+
+		//If the player is sprinting, then zooming in will cause them to stop.
+		UniversalStopSprint();
+	}
+}
+
+void AOPPlayer::GamepadStopZoom()
+{
+	//Make sure the input state is actually set to a "hold".
+	if (!IsValid(WorldSubsystem) || WorldSubsystem->GamepadZoomState != EInputState::Hold) return;
+
+	if (bIsPlayerZoomedIn)
+	{
+		ZoomTimeline->Reverse();
+		bIsPlayerZoomedIn = false;
+	}
+}
+
+//This function exists to cancel zooming in, when the player starts sprinting.
+void AOPPlayer::UniversalStopZoom()
 {
 	if (bIsPlayerZoomedIn)
 	{
@@ -261,102 +460,6 @@ void AOPPlayer::UpdateZoomCurveKeys()
 		ZoomCurve->FloatCurve.UpdateOrAddKey(0.f, PlayerCamera->FieldOfView);
 		ZoomCurve->FloatCurve.UpdateOrAddKey(0.3f, (PlayerCamera->FieldOfView / 2.f));
 	}
-}
-
-void AOPPlayer::ToggleCrouch()
-{
-	if (!bIsPlayerCrouching)
-	{
-		Crouch();
-		bIsPlayerCrouching = true;
-
-		//If the player is sprinting, then crouching will cause them to stop.
-		StopSprint();
-	}
-	else
-	{
-		UnCrouch();
-		bIsPlayerCrouching = false;
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
-}
-
-void AOPPlayer::StartCrouch()
-{
-	if (!bIsPlayerCrouching)
-	{
-		Crouch();
-		bIsPlayerCrouching = true;
-
-		//If the player is sprinting, then crouching will cause them to stop.
-		StopSprint();
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
-}
-
-void AOPPlayer::StopCrouch()
-{
-	if (bIsPlayerCrouching)
-	{
-		UnCrouch();
-		bIsPlayerCrouching = false;
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
-}
-
-void AOPPlayer::ToggleSprint()
-{
-	if (!bIsPlayerSprinting)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		bIsPlayerSprinting = true;
-
-		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
-		StopZoom();
-		StopCrouch();
-	}
-	else
-	{
-		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		bIsPlayerSprinting = false;
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
-}
-
-void AOPPlayer::StartSprint()
-{
-	if (!bIsPlayerSprinting)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-		bIsPlayerSprinting = true;
-
-		//If the player is zoomed in and/or crouching, then sprinting will cause them to stop.
-		StopZoom();
-		StopCrouch();
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
-}
-
-void AOPPlayer::StopSprint()
-{
-	if (bIsPlayerSprinting)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
-		bIsPlayerSprinting = false;
-	}
-
-	//Update the movement status in the player's HUD.
-	OnMovementUpdate.Broadcast();
 }
 
 void AOPPlayer::StartFire()
@@ -425,7 +528,7 @@ void AOPPlayer::StartReload()
 	}
 	
 	StopFire();
-	StopZoom();
+	MouseAndKeyboardStopZoom();
 
 	//The player is temporarily prevented from firing, reloading, or switching weapons.
 	bCanPlayerFire = false;
@@ -500,7 +603,7 @@ void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 	if (!IsValid(CurrentWeapon) || WeaponArray.Num() < 2) return;
 
 	StopFire();
-	StopZoom();
+	MouseAndKeyboardStopZoom();
 
 	//For when the player is unarmed.
 	if (CurrentWeapon == WeaponArray[0])
@@ -784,45 +887,6 @@ void AOPPlayer::StartMelee()
 void AOPPlayer::StopMelee()
 {
 	
-}
-
-void AOPPlayer::BindExtraInputBehaviorToPlayer()
-{
-	// Make sure that we are using a UEnhancedInputComponent; if not, the project is not configured correctly.
-	if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		//Change the "zoom" input behavior from a toggle to a hold, if the player so chooses.
-		if (bHoldZoomEnabled && IsValid(HoldZoomAction))
-		{
-			PlayerEnhancedInputComponent->BindAction(HoldZoomAction, ETriggerEvent::Started, this, &AOPPlayer::StartZoom);
-			PlayerEnhancedInputComponent->BindAction(HoldZoomAction, ETriggerEvent::Completed, this, &AOPPlayer::StopZoom);
-		}
-
-		//Change the "crouch" input behavior from a toggle to a hold, if the player so chooses.
-		if (bHoldCrouchEnabled && IsValid(HoldCrouchAction))
-		{
-			PlayerEnhancedInputComponent->BindAction(HoldCrouchAction, ETriggerEvent::Started, this, &AOPPlayer::StartCrouch);
-			PlayerEnhancedInputComponent->BindAction(HoldCrouchAction, ETriggerEvent::Completed, this, &AOPPlayer::StopCrouch);
-		}
-
-		//Change the "sprint" input behavior from a toggle to a hold, if the player so chooses.
-		if (bHoldSprintEnabled && IsValid(HoldSprintAction))
-		{
-			PlayerEnhancedInputComponent->BindAction(HoldSprintAction, ETriggerEvent::Started, this, &AOPPlayer::StartSprint);
-			PlayerEnhancedInputComponent->BindAction(HoldSprintAction, ETriggerEvent::Completed, this, &AOPPlayer::StopSprint);
-		}
-
-		// Make sure that we have a valid PlayerController.
-		if (APlayerController* PC = Cast<APlayerController>(GetController()))
-		{
-			// Get the Enhanced Input Local Player Subsystem from the Local Player related to our Player Controller.
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-			{
-				//Add the IMC that contains the "hold" inputs that the player wants to use.
-				if (IsValid(ExtraContext)) Subsystem->AddMappingContext(ExtraContext, 1);
-			}
-		}
-	}
 }
 
 void AOPPlayer::CharacterDeath()

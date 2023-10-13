@@ -1,10 +1,14 @@
+---Use Control Rig to create firing animations for each weapon
+
+---Create CharacterHitEffect and EnvironmentHitEffect variables in OPWeapon class, that are spawned at the impact point of shots
+
 ---Search Google Fonts for a desirable font to use for this project
 
----Study UI Material Lab example project, and migrate desired UI assets out of it
+---Continue studying UI Material Lab example project
+	---Start learning more about how to create materials, and material functions so I can make more sense of it all
+	---Once I have a better understanding, migrate desired UI assets out of the project
 
 ---Create OnTakePointDamage() callback functions in the player and enemy classes (once enemy class is created)
-
----Add "muzzle" sockets to each of the weapon meshes
 
 ---Search sound packs for suitable weapon sounds
 
@@ -13,13 +17,13 @@
 	---StartHealthRegen() sets RegenerateHealthHandle's timer on a loop, according to HealthRegenRate
 	---RegenerateHealth() increases the player's health, according to HealthRegenAmount
 
----Consider adding burst-fire functionality to OPWeapon class
-	---If weapon has "IsBurst" tag AND BurstCount is less than ShotAmount, then increment BurstCount and set a timer for Shoot() to be called again
-	---Start an animation cooldown
-	---In the weapon's firing montage, copy the firing animation multiple times; once for each shot in the burst
-	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0 (do this inside an anim notify)
+---Finish adding burst-fire functionality to OPWeapon class
+	---If CurrentFireMode is EFireMode::Burst AND BurstCount is less than ShotAmount, then increment BurstCount
+	---Set a timer for Shoot() to be called again, InRate will be BurstFireRate
+	---Start an animation cooldown, InRate will be (WeaponFiringMontage * 3)
+	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0
 
----Create UDamageType BP classes for each weapon, and for melee attacks
+---Create UDamageType BP classes for each weapon, and one for melee attacks
 
 ---Create OPSaveGame class in C++
 

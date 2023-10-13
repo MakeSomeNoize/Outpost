@@ -62,14 +62,9 @@ protected:
 		TObjectPtr<UTimelineComponent> ZoomTimeline;
 
 	/* Enhanced Input actions and mapping contexts */
-
-	//The IMC that holds all of the player inputs EXCEPT for "Hold Zoom", "Hold Crouch", and "Hold Sprint".
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input")
-		TObjectPtr<UInputMappingContext> BaseContext;
-
-	//The IMC that ONLY holds the "Hold Zoom", "Hold Crouch", and "Hold Sprint" inputs.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input")
-		TObjectPtr<UInputMappingContext> ExtraContext;
+		TObjectPtr<UInputMappingContext> DefaultContext;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement")
 		TObjectPtr<UInputAction> MoveForwardAction;
@@ -86,6 +81,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement")
 		TObjectPtr<UInputAction> GamepadMoveAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement|Toggle/Hold")
+		TObjectPtr<UInputAction> MouseAndKeyboardToggleSprintAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement|Toggle/Hold")
+		TObjectPtr<UInputAction> GamepadToggleSprintAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement|Toggle/Hold")
+		TObjectPtr<UInputAction> MouseAndKeyboardHoldSprintAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement|Toggle/Hold")
+		TObjectPtr<UInputAction> GamepadHoldSprintAction;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Movement")
 		TObjectPtr<UInputAction> JumpAction;
 
@@ -94,6 +101,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Aiming")
 		TObjectPtr<UInputAction> GamepadLookAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Aiming|Toggle/Hold")
+		TObjectPtr<UInputAction> MouseAndKeyboardToggleZoomAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Aiming|Toggle/Hold")
+		TObjectPtr<UInputAction> GamepadToggleZoomAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Aiming|Toggle/Hold")
+		TObjectPtr<UInputAction> MouseAndKeyboardHoldZoomAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Aiming|Toggle/Hold")
+		TObjectPtr<UInputAction> GamepadHoldZoomAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Weapons")
 		TObjectPtr<UInputAction> FireWeaponAction;
@@ -112,24 +131,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Interaction")
 		TObjectPtr<UInputAction> MeleeAction;
-		
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> ToggleZoomAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> HoldZoomAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> ToggleCrouchAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> HoldCrouchAction;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> ToggleSprintAction;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPPlayer|Input|Actions|Toggle/Hold")
-		TObjectPtr<UInputAction> HoldSprintAction;
 
 	/* Curve assets for timelines */
 
@@ -186,25 +187,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Look Sensitivity")
 		float GamepadSensitivity = 100.f;
 
-	/* Extra input behavior */
-
-	//Determines if the player will need to hold the "zoom" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPPlayer|Extra Input Behavior")
-		bool bHoldZoomEnabled;
-
-	//Determines if the player will need to hold the "crouch" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPPlayer|Extra Input Behavior")
-		bool bHoldCrouchEnabled;
-
-	//Determines if the player will need to hold the "sprint" input, or not.
-	UPROPERTY(BlueprintReadWrite, Category = "OPPlayer|Extra Input Behavior")
-		bool bHoldSprintEnabled;
-
-	//Changes the "zoom", "crouch", and/or "sprint" input behaviors from a toggle to a hold.
-	UFUNCTION(BlueprintCallable, Category = "OPPlayer|Extra Input Behavior")
-		void BindExtraInputBehaviorToPlayer();
-
-	/* Sprinting */
+	/* Movement */
 
 	//The player's speed when they're moving normally.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPPlayer|Sprinting")
@@ -218,9 +201,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
 		bool bCanPlayerInteract;
-
-	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
-		bool bIsPlayerCrouching;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OPPlayer|Booleans")
 		bool bIsPlayerSprinting;
@@ -272,19 +252,23 @@ protected:
 	void MouseLook(const FInputActionValue& Value);
 	void GamepadLook(const FInputActionValue& Value);
 
-	void StartJump();
+	void MouseAndKeyboardToggleSprint();
+	void GamepadToggleSprint();
+	
+	void MouseAndKeyboardStartSprint();
+	void MouseAndKeyboardStopSprint();
+	void GamepadStartSprint();
+	void GamepadStopSprint();
+	void UniversalStopSprint();
 
-	void ToggleZoom();
-	void StartZoom();
-	void StopZoom();
+	void MouseAndKeyboardToggleZoom();
+	void GamepadToggleZoom();
 
-	void ToggleCrouch();
-	void StartCrouch();
-	void StopCrouch();
-
-	void ToggleSprint();
-	void StartSprint();
-	void StopSprint();
+	void MouseAndKeyboardStartZoom();
+	void MouseAndKeyboardStopZoom();
+	void GamepadStartZoom();
+	void GamepadStopZoom();
+	void UniversalStopZoom();
 
 	void StartFire();
 	void FireWeapon();

@@ -27,30 +27,48 @@ public:
 	/* Debug options */
 	
 	//Determines whether debug lines for interact traces are visible, or not. 
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options|Debug Lines")
 		bool bInteractDebugLinesEnabled;
 		
 	//Determines whether debug lines for weapon traces are visible, or not. 
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options|Debug Lines")
 		bool bWeaponDebugLinesEnabled;
 
 	//Determines whether debug lines for melee traces are visible, or not. 
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Lines")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options|Debug Lines")
 		bool bMeleeDebugLinesEnabled;
 
 	/*
 	Determines if the player's weapons have infinite ammo, or not.
 	This version prevents the weapons' magazines from going empty.
 	*/
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Infinite Ammo")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options|Cheat Codes")
 		bool bInfiniteAmmoEnabled;
 		
 	/*
 	Determines if the player's weapons have infinite ammo, or not.
 	This version prevents the player's reserve ammo from going empty.
 	*/
-	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Infinite Ammo")
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Debug Options|Cheat Codes")
 		bool bInfiniteAmmoWithReloadEnabled;
+
+	/* Toggle/hold inputs */
+
+	//Determines if the mouse and keyboard input for sprinting is a "toggle" or a "hold".
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Toggle/Hold Inputs")
+		EInputState MouseAndKeyboardSprintState = EInputState::Toggle;
+
+	//Determines if the mouse and keyboard input for zooming in is a "toggle" or a "hold".
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Toggle/Hold Inputs")
+		EInputState MouseAndKeyboardZoomState = EInputState::Toggle;
+
+	//Determines if the gamepad input for sprinting is a "toggle" or a "hold".
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Toggle/Hold Inputs")
+		EInputState GamepadSprintState = EInputState::Toggle;	
+
+	//Determines if the gamepad input for zooming in is a "toggle" or a "hold".
+	UPROPERTY(BlueprintReadWrite, Category = "OPWorldSubsystem|Toggle/Hold Inputs")
+		EInputState GamepadZoomState = EInputState::Hold;
 
 	/* Enemies */
 
