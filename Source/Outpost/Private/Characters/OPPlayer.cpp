@@ -946,7 +946,7 @@ void AOPPlayer::PickUpWeapon_Implementation(AOPWeapon* NewWeapon)
 		{
 			if (!IsPlayerReserveAmmoMaxedOut_Implementation(Index->Stats.WeaponType))
 			{
-				PickUpAmmo_Implementation(Index->Stats.WeaponType, FMath::RandRange(Index->Stats.MaxMagazine, Index->Stats.MaxMagazine * 2));
+				PickUpAmmo_Implementation(Index->Stats.WeaponType, FMath::RandRange(Index->Stats.MaxMagazine / 2, Index->Stats.MaxMagazine));
 				NewWeapon->Destroy();
 			}
 

@@ -4,6 +4,8 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Subsystems/OPWorldSubsystem.h"
 #include "Interfaces/OPCharacterInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
 
 // Sets default values
 AOPWeapon::AOPWeapon()
@@ -121,6 +123,8 @@ void AOPWeapon::WeaponLineTrace()
 		{
 			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::None, WeaponHitResult, true, FLinearColor::Red, FLinearColor::Green, 0.f);
 		}
+
+		ApplyDamageAndParticleEffectToTarget();
 	}
 }
 
@@ -130,6 +134,30 @@ FVector AOPWeapon::CalculateWeaponSpread()
 	FVector ShotAngle = FMath::VRandCone(CameraRotation.Vector(), Stats.SpreadRadius, Stats.SpreadRadius);
 
 	return CameraLocation + ShotAngle * Stats.MaxRange;
+}
+
+void AOPWeapon::ApplyDamageAndParticleEffectToTarget()
+{
+	TObjectPtr<AActor> Target = WeaponHitResult.GetActor();
+	
+	if (IsValid(Target))
+	{
+		//Calculate the direction that the shot came from.
+		FVector ShotFromDirection = (WeaponHitResult.TraceEnd - WeaponHitResult.TraceStart).GetSafeNormal();
+
+		//If the actor hit is a character, then apply damage and spawn a hit effect where the shot landed...
+		if (Target->Implements<UOPCharacterInterface>())
+		{
+			UGameplayStatics::ApplyPointDamage(Target, Stats.Damage, ShotFromDirection, WeaponHitResult, GetOwner()->GetInstigatorController(), this, Stats.DamageType);
+
+			if (IsValid(CharacterHitEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CharacterHitEffect, WeaponHitResult.ImpactPoint);
+		}
+		//...Otherwise, just spawn a different hit effect.
+		else
+		{
+			if (IsValid(EnvironmentHitEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EnvironmentHitEffect, WeaponHitResult.ImpactPoint);
+		}
+	}
 }
 
 void AOPWeapon::EndFiringCooldown()

@@ -30,7 +30,7 @@ struct FWeaponStats
 
 	//The type of damage that this weapon inflicts.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		TSubclassOf<UDamageType> DamageType;
+		TSubclassOf<UDamageType> DamageType = UDamageType::StaticClass();
 
 	//The furthest away that this weapon's rounds will travel.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

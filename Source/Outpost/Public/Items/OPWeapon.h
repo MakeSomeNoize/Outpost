@@ -10,6 +10,7 @@
 
 //Forward declarations.
 class UOPWorldSubsystem;
+class UNiagaraSystem;
 
 UCLASS()
 class OUTPOST_API AOPWeapon : public AActor, public IOPInteractInterface
@@ -49,30 +50,30 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "OPWeapon|Cooldowns")
 		bool bAnimationCooldownActive;
 
-	/* Animation */
+	/* Animations */
 
 	//The socket that this weapon will attach to, when picked up by a character.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations")
 		FName AttachToSocket = FName("FPSPistol");
 
 	//The montage that will play on a CHARACTER, when they fire this weapon.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Firing")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations|Montages|Firing")
 		TObjectPtr<UAnimMontage> CharacterFireMontage;
 
 	//The montage that will play on this WEAPON, when it shoots.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Firing")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations|Montages|Firing")
 		TObjectPtr<UAnimMontage> WeaponShootMontage;
 
 	//The montage that will play on a CHARACTER, when they reload this weapon.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations|Montages")
 		TObjectPtr<UAnimMontage> CharacterReloadMontage;
 
 	//The montage that will play on a CHARACTER, when they equip this weapon.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Switching")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations|Montages|Switching")
 		TObjectPtr<UAnimMontage> CharacterEquipMontage;
 
 	//The montage that will play on a CHARACTER, when they unequip this weapon.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animation|Montages|Switching")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Animations|Montages|Switching")
 		TObjectPtr<UAnimMontage> CharacterUnequipMontage;
 
 	/* Sounds */
@@ -92,11 +93,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
 		TObjectPtr<USceneComponent> WeaponRoot;
 
+	/* Effects */
+
+	//The particle effect that spawns, when a shot from this weapon hits a character.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Effects")
+		TObjectPtr<UNiagaraSystem> CharacterHitEffect;
+
+	//The particle effect that spawns, when a shot from this weapon hits the environment.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Effects")
+		TObjectPtr<UNiagaraSystem> EnvironmentHitEffect;
+
 	UFUNCTION()
 		void CheckInfiniteAmmoStatus();
 	
 	void WeaponLineTrace();
 	FVector CalculateWeaponSpread();
+	void ApplyDamageAndParticleEffectToTarget();
 
 	void EndFiringCooldown();
 	void EndAnimationCooldown();
