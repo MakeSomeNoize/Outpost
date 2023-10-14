@@ -1,3 +1,5 @@
+---Adjust the shoot animations for the AK-47 and M4 Carbine, so that their ShellEject bone movements + scaling look a bit better
+
 ---Search Google Fonts for a desirable font to use for this project
 
 ---Continue studying UI Material Lab example project
@@ -22,11 +24,5 @@
 ---Create UDamageType BP classes for each weapon, and one for melee attacks
 
 ---Create OPSaveGame class in C++
-
----Consider replacing EnvironmentHitEffect in OPWeapon class with something more complex, but more immersive
-	---Create a "FParticleEffects" struct in OPStructs class, that holds references to various particle effects for surfaces (wood, metal, etc.)
-	---If the weapon line trace doesn't hit a character, check the target's physical material (FHitResult.PhysMaterial)
-	---Then do a switch statement that checks the physical material's surface type (create these in ProjectSettings/Physics/PhysicalSurface)
-	---The particle effect that spawns will be dependent on that surface type (UPhysicalMaterial.SurfaceType)
 
 ---TOO MANY OTHER THINGS TO LIST RIGHT NOW...

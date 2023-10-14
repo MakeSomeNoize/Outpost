@@ -10,7 +10,6 @@
 
 //Forward declarations.
 class UOPWorldSubsystem;
-class UNiagaraSystem;
 
 UCLASS()
 class OUTPOST_API AOPWeapon : public AActor, public IOPInteractInterface
@@ -37,9 +36,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
 		TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
-	/* Weapon stats */
+	/* Weapon Stats */
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPWeapon|Weapon Stats")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPWeapon")
 		FWeaponStats Stats;
 
 	/* Cooldowns */
@@ -93,22 +92,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPWeapon|Components")
 		TObjectPtr<USceneComponent> WeaponRoot;
 
-	/* Effects */
+	/* Impact effects */
 
-	//The particle effect that spawns, when a shot from this weapon hits a character.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Effects")
-		TObjectPtr<UNiagaraSystem> CharacterHitEffect;
-
-	//The particle effect that spawns, when a shot from this weapon hits the environment.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Effects")
-		TObjectPtr<UNiagaraSystem> EnvironmentHitEffect;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "OPWeapon")
+		FImpactEffects HitEffects;
 
 	UFUNCTION()
 		void CheckInfiniteAmmoStatus();
 	
 	void WeaponLineTrace();
 	FVector CalculateWeaponSpread();
-	void ApplyDamageAndParticleEffectToTarget();
+	void ApplyDamageToTarget();
+	void SpawnParticleEffectOnTarget();
 
 	void EndFiringCooldown();
 	void EndAnimationCooldown();

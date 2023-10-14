@@ -6,6 +6,7 @@
 #include "Interfaces/OPCharacterInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 // Sets default values
 AOPWeapon::AOPWeapon()
@@ -124,7 +125,7 @@ void AOPWeapon::WeaponLineTrace()
 			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::None, WeaponHitResult, true, FLinearColor::Red, FLinearColor::Green, 0.f);
 		}
 
-		ApplyDamageAndParticleEffectToTarget();
+		ApplyDamageToTarget();
 	}
 }
 
@@ -136,7 +137,7 @@ FVector AOPWeapon::CalculateWeaponSpread()
 	return CameraLocation + ShotAngle * Stats.MaxRange;
 }
 
-void AOPWeapon::ApplyDamageAndParticleEffectToTarget()
+void AOPWeapon::ApplyDamageToTarget()
 {
 	TObjectPtr<AActor> Target = WeaponHitResult.GetActor();
 	
@@ -144,19 +145,30 @@ void AOPWeapon::ApplyDamageAndParticleEffectToTarget()
 	{
 		//Calculate the direction that the shot came from.
 		FVector ShotFromDirection = (WeaponHitResult.TraceEnd - WeaponHitResult.TraceStart).GetSafeNormal();
+		
+		UGameplayStatics::ApplyPointDamage(Target, Stats.Damage, ShotFromDirection, WeaponHitResult, GetOwner()->GetInstigatorController(), this, Stats.DamageType);
 
-		//If the actor hit is a character, then apply damage and spawn a hit effect where the shot landed...
-		if (Target->Implements<UOPCharacterInterface>())
-		{
-			UGameplayStatics::ApplyPointDamage(Target, Stats.Damage, ShotFromDirection, WeaponHitResult, GetOwner()->GetInstigatorController(), this, Stats.DamageType);
+		SpawnParticleEffectOnTarget();
+	}
+}
 
-			if (IsValid(CharacterHitEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CharacterHitEffect, WeaponHitResult.ImpactPoint);
-		}
-		//...Otherwise, just spawn a different hit effect.
-		else
-		{
-			if (IsValid(EnvironmentHitEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, EnvironmentHitEffect, WeaponHitResult.ImpactPoint);
-		}
+void AOPWeapon::SpawnParticleEffectOnTarget()
+{
+	//Spawn a hit effect where the shot landed, based on the type of surface that was hit.
+	switch (WeaponHitResult.PhysMaterial->SurfaceType)
+	{
+		case SurfaceType1:
+			if (IsValid(HitEffects.WoodImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.WoodImpactEffect, WeaponHitResult.ImpactPoint);
+			break;
+		case SurfaceType2:
+			if (IsValid(HitEffects.MetalImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.MetalImpactEffect, WeaponHitResult.ImpactPoint);
+			break;
+		case SurfaceType3:
+			if (IsValid(HitEffects.ConcreteImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.ConcreteImpactEffect, WeaponHitResult.ImpactPoint);
+			break;
+		default:
+			if (IsValid(HitEffects.CharacterImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.CharacterImpactEffect, WeaponHitResult.ImpactPoint);
+			break;
 	}
 }
 

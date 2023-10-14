@@ -5,6 +5,7 @@ This class contains all of the custom structs that will be used in the Outpost p
 #pragma once
 
 #include "OPEnums.h"
+#include "NiagaraSystem.h"
 #include "OPStructs.generated.h"
 
 USTRUCT(BlueprintType)
@@ -78,4 +79,26 @@ struct FWeaponStats
 	//The number of shots that this weapon fires, when the trigger is pulled.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		int32 ShotAmount = 1;
+};
+
+USTRUCT(BlueprintType)
+struct FImpactEffects
+{
+	GENERATED_BODY()
+
+	//The particle effect that spawns, when a shot hits an actor that represents a character.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UNiagaraSystem> CharacterImpactEffect;
+
+	//The particle effect that spawns, when a shot hits an actor made of wood.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UNiagaraSystem> WoodImpactEffect;
+
+	//The particle effect that spawns, when a shot hits an actor made of metal.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UNiagaraSystem> MetalImpactEffect;
+
+	//The particle effect that spawns, when a shot hits an actor made of concrete.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UNiagaraSystem> ConcreteImpactEffect;
 };

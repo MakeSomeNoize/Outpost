@@ -528,7 +528,7 @@ void AOPPlayer::StartReload()
 	}
 	
 	StopFire();
-	MouseAndKeyboardStopZoom();
+	UniversalStopZoom();
 
 	//The player is temporarily prevented from firing, reloading, or switching weapons.
 	bCanPlayerFire = false;
@@ -603,7 +603,7 @@ void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 	if (!IsValid(CurrentWeapon) || WeaponArray.Num() < 2) return;
 
 	StopFire();
-	MouseAndKeyboardStopZoom();
+	UniversalStopZoom();
 
 	//For when the player is unarmed.
 	if (CurrentWeapon == WeaponArray[0])
@@ -750,6 +750,8 @@ void AOPPlayer::ChangeFireMode()
 	if (!bCanPlayerFire) return;
 	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
 	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
+
+	StopFire();
 
 	//The current weapon's fire mode will change, based on which ones are available.
 	switch (CurrentWeapon->Stats.CurrentFireMode)
