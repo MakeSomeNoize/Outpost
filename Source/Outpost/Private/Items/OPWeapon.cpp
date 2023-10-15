@@ -154,6 +154,9 @@ void AOPWeapon::ApplyDamageToTarget()
 
 void AOPWeapon::SpawnParticleEffectOnTarget()
 {
+	//Based on the particle effects being used, this will cause them to spawn in a way that faces the player.
+	FRotator EnvironmentRotation = FRotator(WeaponHitResult.GetActor()->GetActorRotation().Yaw, CameraRotation.Yaw, 0.f);
+
 	/*
 	Spawn a hit effect where the shot landed, based on the type of surface that was hit.
 	SurfaceType1 = "WoodSurface", SurfaceType2 = "MetalSurface", SurfaceType3 = "ConcreteSurface".
@@ -164,10 +167,10 @@ void AOPWeapon::SpawnParticleEffectOnTarget()
 			if (IsValid(HitEffects.WoodImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.WoodImpactEffect, WeaponHitResult.ImpactPoint);
 			break;
 		case SurfaceType2:
-			if (IsValid(HitEffects.MetalImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.MetalImpactEffect, WeaponHitResult.ImpactPoint);
+			if (IsValid(HitEffects.MetalImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.MetalImpactEffect, WeaponHitResult.ImpactPoint, EnvironmentRotation);
 			break;
 		case SurfaceType3:
-			if (IsValid(HitEffects.ConcreteImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.ConcreteImpactEffect, WeaponHitResult.ImpactPoint);
+			if (IsValid(HitEffects.ConcreteImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.ConcreteImpactEffect, WeaponHitResult.ImpactPoint, EnvironmentRotation);
 			break;
 		default:
 			if (IsValid(HitEffects.CharacterImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.CharacterImpactEffect, WeaponHitResult.ImpactPoint);
