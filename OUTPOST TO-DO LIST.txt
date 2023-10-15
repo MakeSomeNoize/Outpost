@@ -1,5 +1,3 @@
----Adjust the shoot animations for the AK-47 and M4 Carbine, so that their ShellEject bone movements + scaling look a bit better
-
 ---Search Google Fonts for a desirable font to use for this project
 
 ---Continue studying UI Material Lab example project

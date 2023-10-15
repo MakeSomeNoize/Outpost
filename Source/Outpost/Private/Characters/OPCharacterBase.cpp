@@ -26,7 +26,7 @@ void AOPCharacterBase::BeginPlay()
 void AOPCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 }
 
 void AOPCharacterBase::SetCurrentHealth(int32 NewValue)

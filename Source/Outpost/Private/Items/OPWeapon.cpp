@@ -154,7 +154,10 @@ void AOPWeapon::ApplyDamageToTarget()
 
 void AOPWeapon::SpawnParticleEffectOnTarget()
 {
-	//Spawn a hit effect where the shot landed, based on the type of surface that was hit.
+	/*
+	Spawn a hit effect where the shot landed, based on the type of surface that was hit.
+	SurfaceType1 = "WoodSurface", SurfaceType2 = "MetalSurface", SurfaceType3 = "ConcreteSurface".
+	*/
 	switch (WeaponHitResult.PhysMaterial->SurfaceType)
 	{
 		case SurfaceType1:
