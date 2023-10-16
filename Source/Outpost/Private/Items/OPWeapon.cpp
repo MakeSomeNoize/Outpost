@@ -84,6 +84,8 @@ void AOPWeapon::Shoot()
 		WeaponLineTrace();
 	}
 
+	bFiringCooldownActive = true;
+
 	//Set a timer for when the cooldown on firing will end.
 	GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, Stats.FireRate, false);
 	
