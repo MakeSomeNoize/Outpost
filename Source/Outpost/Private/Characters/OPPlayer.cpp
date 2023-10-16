@@ -69,8 +69,8 @@ void AOPPlayer::BeginPlay()
 		CurrentWeapon = WeaponArray[0];
 	}
 
-	//Bind a callback function to OnInfiniteAmmo delegate, if applicable.
-	if (IsValid(WorldSubsystem) && WorldSubsystem->bInfiniteAmmoWithReloadEnabled) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::DebugReplenishReserveAmmo);
+	//Bind a callback function to OnInfiniteAmmo delegate.
+	if (IsValid(WorldSubsystem)) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::DebugReplenishReserveAmmo);
 	
 }
 
@@ -466,7 +466,7 @@ void AOPPlayer::StartFire()
 {
 	if (!bCanPlayerFire) return;
 	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
-	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
+	if (CurrentWeapon->bFiringCooldownActive) return;
 
 	//Play a dry-fire sound, if the current weapon is empty.
 	if (CurrentWeapon->Stats.CurrentMagazine <= 0)
@@ -749,7 +749,7 @@ void AOPPlayer::ChangeFireMode()
 {
 	if (!bCanPlayerFire) return;
 	if (!IsValid(CurrentWeapon) || CurrentWeapon->Stats.WeaponType == EWeaponType::NONE) return;
-	if (CurrentWeapon->bFiringCooldownActive || CurrentWeapon->bAnimationCooldownActive) return;
+	if (CurrentWeapon->bFiringCooldownActive) return;
 
 	StopFire();
 
@@ -903,20 +903,23 @@ void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
 	switch(AmmoType)
 	{
 		case EWeaponType::Pistol:
-			PistolAmmo = FMath::Clamp(PistolAmmo++, 0, MaxReserveAmmo);
+			PistolAmmo = FMath::Clamp((PistolAmmo + 1), 0, MaxReserveAmmo);
 			break;
 		case EWeaponType::Rifle:
-			RifleAmmo = FMath::Clamp(RifleAmmo++, 0, MaxReserveAmmo);
+			RifleAmmo = FMath::Clamp((RifleAmmo + 1), 0, MaxReserveAmmo);
 			break;
 		case EWeaponType::Shotgun:
-			ShotgunAmmo = FMath::Clamp(ShotgunAmmo++, 0, MaxReserveAmmo);
+			ShotgunAmmo = FMath::Clamp((ShotgunAmmo + 1), 0, MaxReserveAmmo);
 			break;
 		case EWeaponType::Sniper:
-			SniperAmmo = FMath::Clamp(SniperAmmo++, 0, MaxReserveAmmo);
+			SniperAmmo = FMath::Clamp((SniperAmmo + 1), 0, MaxReserveAmmo);
 			break;
 		default:
 			break;
 	}
+
+	//Update the weapon info in the player's HUD.
+	OnWeaponUpdate.Broadcast();
 }
 
 void AOPPlayer::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)

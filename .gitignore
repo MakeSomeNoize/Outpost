@@ -75,7 +75,7 @@ DerivedDataCache/*
 
 # THESE DIRECTORIES SHOULDN'T GO ON GITHUB
 Content/StarterContent/**
-Content/Characters/**
+Content/Characters/Mannequin_UE4/**
 Content/LevelPrototyping/**
 Content/PistolAnimsetPro/**
 Content/RifleAnimsetPro/**

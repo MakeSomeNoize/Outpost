@@ -84,13 +84,8 @@ void AOPWeapon::Shoot()
 		WeaponLineTrace();
 	}
 
-	//If the weapon is semi-automatic, then start a cooldown and set a timer for when the cooldown will end.
-	if (Stats.CurrentFireMode == EFireMode::SemiAuto)
-	{
-		bFiringCooldownActive = true;
-
-		GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, Stats.FireRate, false);
-	}
+	//Set a timer for when the cooldown on firing will end.
+	GetWorldTimerManager().SetTimer(FiringCooldownHandle, this, &AOPWeapon::EndFiringCooldown, Stats.FireRate, false);
 	
 	if (IsValid(WorldSubsystem)) CheckInfiniteAmmoStatus();
 }
@@ -181,11 +176,6 @@ void AOPWeapon::SpawnParticleEffectOnTarget()
 void AOPWeapon::EndFiringCooldown()
 {
 	bFiringCooldownActive = false;
-}
-
-void AOPWeapon::EndAnimationCooldown()
-{
-	bAnimationCooldownActive = false;
 }
 
 void AOPWeapon::CheckInfiniteAmmoStatus()

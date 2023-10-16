@@ -46,9 +46,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "OPWeapon|Cooldowns")
 		bool bFiringCooldownActive;
 
-	UPROPERTY(BlueprintReadOnly, Category = "OPWeapon|Cooldowns")
-		bool bAnimationCooldownActive;
-
 	/* Animations */
 
 	//The socket that this weapon will attach to, when picked up by a character.
@@ -79,7 +76,7 @@ public:
 
 	//The sound that plays when the character tries to fire an empty weapon.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPWeapon|Sounds")
-		TObjectPtr<USoundWave> DryFireSound;
+		TObjectPtr<USoundBase> DryFireSound;
 	
 	void Shoot();
 
@@ -106,10 +103,8 @@ protected:
 	void SpawnParticleEffectOnTarget();
 
 	void EndFiringCooldown();
-	void EndAnimationCooldown();
 
 	FTimerHandle FiringCooldownHandle;
-	FTimerHandle AnimationCooldownHandle;
 
 	FHitResult WeaponHitResult;
 	
