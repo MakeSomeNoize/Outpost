@@ -27,25 +27,25 @@ public:
 	/* Health */
 
 	//Returns the character's current health.
-	UFUNCTION(BlueprintCallable, BlueprintGetter, Category = "OPCharacterBase|Health")
+	UFUNCTION(BlueprintPure, Category = "OPCharacterBase|Health")
 		FORCEINLINE int32 GetCurrentHealth() { return CurrentHealth; }
 
 	/*
 	Changes the character's current health.
 	@param	NewValue	The value that CurrentHealth should be changed to.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintSetter, Category = "OPCharacterBase|Health")
+	UFUNCTION(BlueprintCallable, Category = "OPCharacterBase|Health")
 		void SetCurrentHealth(int32 NewValue);
 
 	//Returns the character's current health.
-	UFUNCTION(BlueprintCallable, BlueprintGetter, Category = "OPCharacterBase|Health")
+	UFUNCTION(BlueprintPure, Category = "OPCharacterBase|Health")
 		FORCEINLINE int32 GetMaxHealth() { return MaxHealth; }
 
 	/*
 	Changes the character's current health.
 	@param	NewValue	The value that MaxHealth should be changed to.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintSetter, Category = "OPCharacterBase|Health")
+	UFUNCTION(BlueprintCallable, Category = "OPCharacterBase|Health")
 		void SetMaxHealth(int32 NewValue);
 
 protected:
@@ -69,11 +69,11 @@ protected:
 	/* Health */
 
 	//The amount of health that the character currently has.
-	UPROPERTY(VisibleInstanceOnly, BlueprintGetter = GetCurrentHealth, BlueprintSetter = SetCurrentHealth, Category = "OPCharacterBase|Health")
+	UPROPERTY(VisibleInstanceOnly, Category = "OPCharacterBase|Health")
 		int32 CurrentHealth = 1;
 
 	//The maximum amount of health that the character can have.
-	UPROPERTY(VisibleInstanceOnly, BlueprintGetter = GetMaxHealth, BlueprintSetter = SetMaxHealth, Category = "OPCharacterBase|Health")
+	UPROPERTY(EditDefaultsOnly, Category = "OPCharacterBase|Health")
 		int32 MaxHealth = 100;
 
 	/* Booleans */

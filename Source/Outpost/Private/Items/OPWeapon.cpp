@@ -36,8 +36,8 @@ void AOPWeapon::BeginPlay()
 
 	Stats.CurrentMagazine = Stats.MaxMagazine;
 
-	//Shotguns are not allowed to be automatic or burst-fire.
-	if (Stats.WeaponType == EWeaponType::Shotgun)
+	//Shotguns and sniper rifles are not allowed to be automatic or burst-fire.
+	if (Stats.WeaponType == EWeaponType::Shotgun || Stats.WeaponType == EWeaponType::Sniper)
 	{
 		Stats.DefaultFireMode = EFireMode::SemiAuto;
 		Stats.bDoesWeaponSupportAuto = false;
@@ -142,6 +142,9 @@ void AOPWeapon::ApplyDamageToTarget()
 	{
 		//Calculate the direction that the shot came from.
 		FVector ShotFromDirection = (WeaponHitResult.TraceEnd - WeaponHitResult.TraceStart).GetSafeNormal();
+
+		//If a character was hit, then tell them which physical material on their mesh's physics asset was hit.
+		if (Target->Implements<UOPCharacterInterface>()) IOPCharacterInterface::Execute_UpdateLastHitMaterial(Target, WeaponHitResult.PhysMaterial.Get());
 		
 		UGameplayStatics::ApplyPointDamage(Target, Stats.Damage, ShotFromDirection, WeaponHitResult, GetOwner()->GetInstigatorController(), this, Stats.DamageType);
 
@@ -151,17 +154,21 @@ void AOPWeapon::ApplyDamageToTarget()
 
 void AOPWeapon::SpawnParticleEffectOnTarget()
 {
+	if (!IsValid(WeaponHitResult.PhysMaterial.Get())) return;
+
 	//Based on the particle effects being used, this will cause them to spawn in a way that faces the player.
 	FRotator EnvironmentRotation = FRotator(WeaponHitResult.GetActor()->GetActorRotation().Yaw, CameraRotation.Yaw, 0.f);
+
+	EPhysicalSurface SurfaceHit = WeaponHitResult.PhysMaterial->SurfaceType;
 
 	/*
 	Spawn a hit effect where the shot landed, based on the type of surface that was hit.
 	SurfaceType1 = "WoodSurface", SurfaceType2 = "MetalSurface", SurfaceType3 = "ConcreteSurface".
 	*/
-	switch (WeaponHitResult.PhysMaterial->SurfaceType)
+	switch (SurfaceHit)
 	{
 		case SurfaceType1:
-			if (IsValid(HitEffects.WoodImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.WoodImpactEffect, WeaponHitResult.ImpactPoint);
+			if (IsValid(HitEffects.WoodImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.WoodImpactEffect, WeaponHitResult.ImpactPoint, EnvironmentRotation);
 			break;
 		case SurfaceType2:
 			if (IsValid(HitEffects.MetalImpactEffect)) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, HitEffects.MetalImpactEffect, WeaponHitResult.ImpactPoint, EnvironmentRotation);

@@ -8,6 +8,7 @@ This class contains all of the custom structs that will be used in the Outpost p
 #include "NiagaraSystem.h"
 #include "OPStructs.generated.h"
 
+//A struct for weapon attributes.
 USTRUCT(BlueprintType)
 struct FWeaponStats
 {
@@ -81,6 +82,7 @@ struct FWeaponStats
 		int32 ShotAmount = 1;
 };
 
+//A struct for "impact" particle effects.
 USTRUCT(BlueprintType)
 struct FImpactEffects
 {
@@ -101,4 +103,23 @@ struct FImpactEffects
 	//The particle effect that spawns, when a shot hits an actor made of concrete.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		TObjectPtr<UNiagaraSystem> ConcreteImpactEffect;
+};
+
+//A struct for physical materials stored on the physics asset of a character.
+USTRUCT(BlueprintType)
+struct FCharacterMaterials
+{
+	GENERATED_BODY()
+
+	//The physical material that determines if a character receives headshot damage.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UPhysicalMaterial> HeadMaterial;
+
+	//The physical material that determines if a character receives torso damage.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UPhysicalMaterial> TorsoMaterial;
+
+	//The physical material that determines if a character receives limb damage.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UPhysicalMaterial> LimbMaterial;
 };

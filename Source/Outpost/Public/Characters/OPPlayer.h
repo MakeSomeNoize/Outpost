@@ -241,7 +241,10 @@ protected:
 		void EndSwitch(AOPWeapon* NewWeapon);
 
 	UFUNCTION()
-		void DebugReplenishReserveAmmo(EWeaponType AmmoType);
+		void ReplenishReserveAmmo(EWeaponType AmmoType);
+
+	UFUNCTION()
+		void TakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
 	
 	void MoveForward(const FInputActionValue& Value);
 	void MoveBackward(const FInputActionValue& Value);

@@ -4,8 +4,6 @@
 	---Start learning more about how to create materials, and material functions so I can make more sense of it all
 	---Once I have a better understanding, migrate desired UI assets out of the project
 
----Create OnTakePointDamage() callback functions in the player and enemy classes (once enemy class is created)
-
 ---Search sound packs for suitable weapon sounds
 
 ---Create a health regeneration system for the player
@@ -19,7 +17,7 @@
 	---Start an animation cooldown, InRate will be (WeaponFiringMontage * 3)
 	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0
 
----Create UDamageType BP classes for each weapon, and one for melee attacks
+---Migrate UDamageType BP classes from FPShooter project, then create new ones for sniper damage and melee attacks
 
 ---Create OPSaveGame class in C++
 

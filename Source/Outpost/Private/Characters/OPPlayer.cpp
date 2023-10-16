@@ -70,7 +70,10 @@ void AOPPlayer::BeginPlay()
 	}
 
 	//Bind a callback function to OnInfiniteAmmo delegate.
-	if (IsValid(WorldSubsystem)) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::DebugReplenishReserveAmmo);
+	if (IsValid(WorldSubsystem)) WorldSubsystem->OnInfiniteAmmoWithReloadUpdate.AddDynamic(this, &AOPPlayer::ReplenishReserveAmmo);
+
+	//Bind a callback function to OnTakePointDamage delegate.
+	OnTakePointDamage.AddDynamic(this, &AOPPlayer::TakePointDamage);
 	
 }
 
@@ -893,11 +896,15 @@ void AOPPlayer::StopMelee()
 
 void AOPPlayer::CharacterDeath()
 {
+	if (bIsCharacterDead) return;
+
 	Super::CharacterDeath();
-	
+
+	//LOGIC FOR MAKING THE PLAYER DROP THEIR CURRENT WEAPON GOES HERE
+	//LOGIC FOR STARTING THE "GAME OVER" SEQUENCE GOES HERE
 }
 
-void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
+void AOPPlayer::ReplenishReserveAmmo(EWeaponType AmmoType)
 {
 	//If infinite ammo with reloading is enabled, then the player will get reserve ammo every time they fire.
 	switch(AmmoType)
@@ -920,6 +927,18 @@ void AOPPlayer::DebugReplenishReserveAmmo(EWeaponType AmmoType)
 
 	//Update the weapon info in the player's HUD.
 	OnWeaponUpdate.Broadcast();
+}
+
+void AOPPlayer::TakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
+{
+	//The character cannot have a health value below 0.
+	CurrentHealth = FMath::Clamp((CurrentHealth - Damage), 0, MaxHealth);
+
+	//If the character has run out of health, then they die.
+	if (CurrentHealth <= 0)
+	{
+		CharacterDeath();
+	}
 }
 
 void AOPPlayer::MeleeSphereTrace_Implementation(FVector MeleeStart, FVector MeleeEnd, float Radius)

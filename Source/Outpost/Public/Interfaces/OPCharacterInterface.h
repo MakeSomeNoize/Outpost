@@ -60,6 +60,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Inventory")
 		bool IsPlayerReserveAmmoMaxedOut(EWeaponType TypeToCheck);
 
+	/*
+	Tells a character which physical material on their mesh's physics asset got hit most recently.
+	Meant to be used in OPEnemy class only, for calculating location-based damage.
+	*/
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OPCharacterInterface|Enemies")
+		void UpdateLastHitMaterial(UPhysicalMaterial* MaterialHit);
+
 protected:
 	
 };

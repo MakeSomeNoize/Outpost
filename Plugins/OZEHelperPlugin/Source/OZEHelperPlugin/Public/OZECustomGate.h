@@ -15,7 +15,6 @@ struct FGate
 {
 	GENERATED_BODY()
 
-public:
 	//Constructor declarations.
 	FORCEINLINE FGate();
 	explicit FORCEINLINE FGate(bool bStartClosed);
@@ -32,9 +31,8 @@ public:
 	//Checks to see if logic can be executed.
 	FORCEINLINE bool IsOpen() { return bGateOpen; }
 
-protected:
-	//Dictates whether or not logic can be executed from the custom gate.
-	UPROPERTY(VisibleAnywhere)
+	//Dictates whether or not logic can be executed.
+	UPROPERTY(BlueprintReadWrite)
 		bool bGateOpen;
 };
 
@@ -42,17 +40,19 @@ protected:
 FORCEINLINE FGate::FGate() : bGateOpen(false) {}
 FORCEINLINE FGate::FGate(const bool bStartClosed) : bGateOpen(!bStartClosed) {}
 
-/* HOW TO USE THIS CLASS IN UNREAL PROJECTS:
+/*
+HOW TO USE THIS CLASS IN UNREAL PROJECTS:
+
 1. Add the OZECustomGate.h file to the Unreal project's Source folder.
 
 2. #include "OZECustomGate.h" in the desired class.
 
-3. Declare an FGate struct as follows:
+3. Declare a FGate struct as follows:
 
 UPROPERTY(VisibleAnywhere)
   	FGate Gate = FGate(false);
 
-4. The bool parameter passed into the constructor determines whether the custom gate will start open, or start closed.
+4. The bool parameter passed into the constructor determines whether the struct will start open, or start closed.
 
 5. Use Gate.IsOpen() as a condition to check whether or not logic should be executed.
 

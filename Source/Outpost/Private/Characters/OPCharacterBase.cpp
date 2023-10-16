@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/OPCharacterBase.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -8,7 +9,8 @@ AOPCharacterBase::AOPCharacterBase(const FObjectInitializer& ObjectInitializer) 
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Ignore);
 }
 
 // Called when the game starts or when spawned
@@ -49,6 +51,10 @@ void AOPCharacterBase::CharacterDeath()
 {
 	//Detach the character from their controller.
 	DetachFromControllerPendingDestroy();
+
+	//Disable collision and gravity on the character's capsule component.
+	GetCapsuleComponent()->SetCollisionProfileName("NoCollision");
+	GetCapsuleComponent()->SetEnableGravity(false);
 
 	bIsCharacterDead = true;
 }
