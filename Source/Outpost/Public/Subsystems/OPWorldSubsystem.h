@@ -8,6 +8,7 @@
 #include "OPWorldSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInfiniteAmmoWithReloadDelegate, EWeaponType, CurrentWeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEnemyDelegate);
 
 /**
  * 
@@ -78,8 +79,11 @@ public:
 
 	/* Delegates */
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPWordlSubsystem|Delegates")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPWorldSubsystem|Delegates")
 		FInfiniteAmmoWithReloadDelegate OnInfiniteAmmoWithReloadUpdate;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "OPWorldSubsystem|Delegates")
+		FEnemyDelegate OnEnemyUpdate;
 
 protected:
 	

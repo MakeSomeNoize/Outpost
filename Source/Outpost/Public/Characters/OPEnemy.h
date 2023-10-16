@@ -32,12 +32,24 @@ protected:
 	//Overridden from OPCharacterBase class.
 	virtual void CharacterDeath() override;
 
+	/* Character materials */
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		FCharacterMaterials DamageMaterials;
+
+	/* Death and respawning */
+	
+	//The amount of time it takes for a dead enemy's body to be cleared from the level.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPEnemy|Death and Respawning")
+		float ClearTimer = 30.f;
 
 	UFUNCTION()
 		void TakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
 
+	void ClearEnemy();
+
 	//Used for calculating location-based damage.
 	TObjectPtr<UPhysicalMaterial> LastHitMaterial;
+
+	FTimerHandle ClearHandle;
 };

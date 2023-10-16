@@ -36,12 +36,19 @@ void AOPEnemy::CharacterDeath()
 
 	Super::CharacterDeath();
 
-	//Remove the enemy from the global enemy array, once they die.
-	if (IsValid(WorldSubsystem)) WorldSubsystem->EnemyArray.Remove(this);
+	//Remove the enemy from the global enemy array once they die, and update enemy information.
+	if (IsValid(WorldSubsystem))
+	{
+		WorldSubsystem->EnemyArray.Remove(this);
+		WorldSubsystem->OnEnemyUpdate.Broadcast();
+	}
 
 	//The enemy goes into a ragdoll state.
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName("Ragdoll");
+
+	//Set a timer for when the enemy's body will be cleared from the level.
+	GetWorldTimerManager().SetTimer(ClearHandle, this, &AOPEnemy::ClearEnemy, ClearTimer);
 }
 
 void AOPEnemy::TakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser)
@@ -70,6 +77,12 @@ void AOPEnemy::TakePointDamage(AActor* DamagedActor, float Damage, AController* 
 	{
 		CharacterDeath();
 	}
+}
+
+void AOPEnemy::ClearEnemy()
+{
+	//The enemy's body is cleared from the level, after a specified amount of time.
+	Destroy();
 }
 
 void AOPEnemy::UpdateLastHitMaterial_Implementation(UPhysicalMaterial* MaterialHit)

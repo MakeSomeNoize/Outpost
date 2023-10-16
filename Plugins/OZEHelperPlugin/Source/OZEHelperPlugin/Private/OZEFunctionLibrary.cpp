@@ -18,3 +18,12 @@ void UOZEFunctionLibrary::CustomGameOnlyInputMode(UObject* WorldContextObject, i
 		PlayerController->SetInputMode(InputMode);
 	}
 }
+
+void UOZEFunctionLibrary::CustomDebugMessage(const FString& Message, FColor TextColor, float DisplayTime)
+{
+	//Print the intended message onscreen.
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, DisplayTime, TextColor, Message);
+	
+	//Afterwards, print it to the log as well.
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+}

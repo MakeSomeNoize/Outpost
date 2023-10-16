@@ -4,8 +4,6 @@
 	---Start learning more about how to create materials, and material functions so I can make more sense of it all
 	---Once I have a better understanding, migrate desired UI assets out of the project
 
----Search sound packs for suitable weapon sounds
-
 ---Create a health regeneration system for the player
 	---When the player takes damage, RegenerateHealthHandle's timer is cleared and StartHealthRegenHandle's timer is set
 	---StartHealthRegen() sets RegenerateHealthHandle's timer on a loop, according to HealthRegenRate
@@ -16,8 +14,6 @@
 	---Set a timer for Shoot() to be called again, InRate will be BurstFireRate
 	---Start an animation cooldown, InRate will be (WeaponFiringMontage * 3)
 	---Once the burst-fire montage has ended, end the animation cooldown and reset BurstCount to 0
-
----Migrate UDamageType BP classes from FPShooter project, then create new ones for sniper damage and melee attacks
 
 ---Create OPSaveGame class in C++
 

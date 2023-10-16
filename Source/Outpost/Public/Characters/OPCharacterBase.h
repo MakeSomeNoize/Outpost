@@ -93,7 +93,7 @@ protected:
 
 	//The type of damage inflicted by this character's melee attacks.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OPCharacterBase|Melee")
-		TSubclassOf<UDamageType> MeleeDamageType;
+		TSubclassOf<UDamageType> MeleeDamageType = UDamageType::StaticClass();
 
 	/*
 	An array of all the actors damaged by the character's last melee attack.
