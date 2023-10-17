@@ -2,13 +2,15 @@
 
 #include "Characters/OPEnemy.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "UASAimAssistTargetComponent.h"
 
 // Sets default values
 AOPEnemy::AOPEnemy(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
+	AimAssistTargetComponent = CreateDefaultSubobject<UUASAimAssistTargetComponent>("Aim Assist Target Component");
 }
 
 // Called when the game starts or when spawned
@@ -21,6 +23,9 @@ void AOPEnemy::BeginPlay()
 
 	//Bind a callback function to OnTakePointDamage delegate.
 	OnTakePointDamage.AddDynamic(this, &AOPEnemy::TakePointDamage);
+
+	//Initialize the enemy as an aim assist target.
+	AimAssistTargetComponent->Init(GetMesh());
 }
 
 // Called every frame

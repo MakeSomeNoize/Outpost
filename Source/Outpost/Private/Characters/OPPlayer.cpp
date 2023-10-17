@@ -624,7 +624,7 @@ void AOPPlayer::CycleWeapons(const FInputActionValue& Value)
 	//For when the player is holding their first weapon.
 	else if (CurrentWeapon == WeaponArray[1])
 	{
-		//If the player is holding their first weapon, then switching "forwards" will equip the last weapon in the array.
+		//If the player is holding their first weapon, then switching "backwards" will equip the last weapon in the array.
 		if (Value.GetMagnitude() < 0)
 		{
 			StartSwitch(WeaponArray.Last());

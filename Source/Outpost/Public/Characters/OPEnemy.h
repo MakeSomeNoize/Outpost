@@ -6,6 +6,9 @@
 #include "Characters/OPCharacterBase.h"
 #include "OPEnemy.generated.h"
 
+//Forward declarations.
+class UUASAimAssistTargetComponent;
+
 /**
  * 
  */
@@ -24,6 +27,11 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	/* Actor and scene components */
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "OPEnemy|Components")
+		TObjectPtr<UUASAimAssistTargetComponent> AimAssistTargetComponent;
 
 	/* Overriden from OPCharacterInterface */
 
