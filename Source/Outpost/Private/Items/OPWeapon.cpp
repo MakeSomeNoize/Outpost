@@ -115,7 +115,7 @@ void AOPWeapon::WeaponLineTrace()
 		//Show debug lines for the line trace, if they've been globally enabled.
 		if (IsValid(WorldSubsystem) && WorldSubsystem->bWeaponDebugLinesEnabled)
 		{
-			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, WeaponHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
+			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, ETraceTypeQuery::TraceTypeQuery3, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, WeaponHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.f);
 		}
 		else
 		{

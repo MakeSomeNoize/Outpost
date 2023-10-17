@@ -822,7 +822,7 @@ void AOPPlayer::InteractLineTrace()
 		//Show debug lines for the line trace, if they've been globally enabled.
 		if (IsValid(WorldSubsystem) && WorldSubsystem->bInteractDebugLinesEnabled)
 		{
-			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, InteractHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.5f);
+			UKismetSystemLibrary::LineTraceSingle(this, CameraLocation, EndLocation, TraceTypeQuery1, false, ActorsToIgnore, EDrawDebugTrace::ForDuration, InteractHitResult, true, FLinearColor::Red, FLinearColor::Green, 2.f);
 		}
 		else
 		{
